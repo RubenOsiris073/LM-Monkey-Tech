@@ -27,10 +27,10 @@ fi
 
 # Descargar archivo zip
 echo "📥 Descargando plantilla..."
-wget -O plantilla.zip "https://plantillashtmlgratis.com/wp-content/themes/helium-child/vista_previa/css/codepenio-logo/codepenio-logo.zip"
+wget -O codepenio-logo.zip "https://plantillashtmlgratis.com/wp-content/themes/helium-child/vista_previa/css/codepenio-logo/codepenio-logo.zip"
 
 # Verificar si la descarga fue exitosa
-if [ -f "plantilla.zip" ]; then
+if [ -f "codepenio-logo.zip" ]; then
     echo "✅ Descarga completada."
 else
     echo "❌ Error en la descarga."
@@ -39,17 +39,40 @@ fi
 
 # Extraer archivos
 echo "📂 Extrayendo archivos..."
-unzip plantilla.zip -d plantilla
+unzip codepenio-logo.zip
 
-# Mover index.html y styles.css desde codepenio-logo a /var/www/html/
+# Mover index.html y styles.css desde la carpeta codepenio-logo a /var/www/html/
 echo "📁 Moviendo archivos a /var/www/html/..."
-sudo mv plantilla/codepenio-logo/index.html /var/www/html/
-sudo mv plantilla/codepenio-logo/styles.css /var/www/html/
+sudo mv codepenio-logo/index.html /var/www/html/
+sudo mv codepenio-logo/styles.css /var/www/html/
 
 # Cambiar permisos y propietario para Apache
 echo "🔧 Ajustando permisos..."
 sudo chown www-data:www-data /var/www/html/index.html /var/www/html/styles.css
 sudo chmod 644 /var/www/html/index.html /var/www/html/styles.css
+
+# Verificar si snapd está instalado, si no lo instala
+if ! command -v snap &> /dev/null; then
+    echo "📦 snapd no encontrado, instalando..."
+    sudo apt install snapd -y
+    sudo systemctl enable --now snapd
+else
+    echo "✅ snapd ya está instalado."
+fi
+
+# Enlazar snapd (en algunas versiones de Ubuntu es necesario)
+sudo ln -s /var/lib/snapd/snap /snap
+
+# Instalar Certbot desde Snap
+echo "🔐 Instalando Certbot desde Snap..."
+sudo snap install core; sudo snap refresh core
+sudo snap install --classic certbot
+
+# Crear alias para que Certbot funcione sin ruta completa
+sudo ln -s /snap/bin/certbot /usr/bin/certbot
+
+# Verificar instalación de Certbot
+certbot --version
 
 # Reiniciar Apache
 echo "🔄 Reiniciando Apache..."
