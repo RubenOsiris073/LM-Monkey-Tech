@@ -5,34 +5,53 @@ echo "🔧 Actualizando servidor..."
 sudo apt update && sudo apt upgrade -y
 
 # Instalar paquetes base
-echo "📦 Instalando paquetes base (wget, git)..."
-sudo apt install wget git -y
+echo "📦 Instalando paquetes base (wget, git, unzip)..."
+sudo apt install wget git unzip -y
 
 # Instalar Apache
 echo "🌐 Instalando Apache..."
 sudo apt install apache2 -y
 
-# Verifica si snapd está instalado, si no lo instala
-if ! command -v snap &> /dev/null; then
-    echo "📦 snapd no encontrado, instalando..."
-    sudo apt install snapd -y
-    sudo systemctl enable --now snapd
+# Habilitar y arrancar Apache
+echo "🚀 Habilitando y arrancando Apache..."
+sudo systemctl enable apache2
+sudo systemctl start apache2
+
+# Verificar estado de Apache
+if systemctl is-active --quiet apache2; then
+    echo "✅ Apache está corriendo correctamente."
 else
-    echo "✅ snapd ya está instalado."
+    echo "❌ Hubo un problema iniciando Apache."
 fi
 
-# Enlaza snapd para que funcione bien
-sudo ln -s /var/lib/snapd/snap /snap
+# Descargar archivo zip
+echo "📥 Descargando plantilla..."
+wget -O plantilla.zip "https://plantillashtmlgratis.com/wp-content/themes/helium-child/vista_previa/css/codepenio-logo/codepenio-logo.zip"
 
-# Instalar Certbot desde Snap
-echo "🔐 Instalando Certbot desde Snap..."
-sudo snap install core; sudo snap refresh core
-sudo snap install --classic certbot
+# Verificar si la descarga fue exitosa
+if [ -f "plantilla.zip" ]; then
+    echo "✅ Descarga completada."
+else
+    echo "❌ Error en la descarga."
+    exit 1
+fi
 
-# Crear alias para que certbot funcione directo
-sudo ln -s /snap/bin/certbot /usr/bin/certbot
+# Extraer archivos
+echo "📂 Extrayendo archivos..."
+unzip plantilla.zip -d plantilla
 
-# Verifica instalación de Certbot
-certbot --version
+# Mover index.html y styles.css a /var/www/html/
+echo "📁 Moviendo archivos a /var/www/html/..."
+sudo mv plantilla/index.html /var/www/html/
+sudo mv plantilla/styles.css /var/www/html/
 
-echo "✅ Servidor actualizado, Apache, wget, git y Certbot instalados."
+# Cambiar permisos y propietario para Apache
+echo "🔧 Ajustando permisos..."
+sudo chown www-data:www-data /var/www/html/index.html /var/www/html/styles.css
+sudo chmod 644 /var/www/html/index.html /var/www/html/styles.css
+
+# Reiniciar Apache
+echo "🔄 Reiniciando Apache..."
+sudo systemctl restart apache2
+
+echo "✅ Instalación completada. Revisa tu servidor web."
