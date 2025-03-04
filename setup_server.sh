@@ -22,6 +22,7 @@ if systemctl is-active --quiet apache2; then
     echo "✅ Apache está corriendo correctamente."
 else
     echo "❌ Hubo un problema iniciando Apache."
+    exit 1
 fi
 
 # Descargar archivo zip
@@ -40,10 +41,10 @@ fi
 echo "📂 Extrayendo archivos..."
 unzip plantilla.zip -d plantilla
 
-# Mover index.html y styles.css a /var/www/html/
+# Mover index.html y styles.css desde codepenio-logo a /var/www/html/
 echo "📁 Moviendo archivos a /var/www/html/..."
-sudo mv plantilla/index.html /var/www/html/
-sudo mv plantilla/styles.css /var/www/html/
+sudo mv plantilla/codepenio-logo/index.html /var/www/html/
+sudo mv plantilla/codepenio-logo/styles.css /var/www/html/
 
 # Cambiar permisos y propietario para Apache
 echo "🔧 Ajustando permisos..."
