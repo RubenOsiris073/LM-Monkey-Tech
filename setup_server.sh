@@ -44,12 +44,12 @@ unzip codepenio-logo.zip
 # Mover index.html y styles.css desde la carpeta codepenio-logo a /var/www/html/
 echo "📁 Moviendo archivos a /var/www/html/..."
 sudo mv codepenio-logo/index.html /var/www/html/
-sudo mv codepenio-logo/styles.css /var/www/html/
+sudo mv codepenio-logo/style.css /var/www/html/
 
 # Cambiar permisos y propietario para Apache
 echo "🔧 Ajustando permisos..."
-sudo chown www-data:www-data /var/www/html/index.html /var/www/html/styles.css
-sudo chmod 644 /var/www/html/index.html /var/www/html/styles.css
+sudo chown www-data:www-data /var/www/html/index.html /var/www/html/style.css
+sudo chmod 644 /var/www/html/index.html /var/www/html/style.css
 
 # Verificar si snapd está instalado, si no lo instala
 if ! command -v snap &> /dev/null; then
