@@ -242,12 +242,7 @@ export default function ClassifyPage() {
             <h1 className="text-3xl font-bold text-gray-800">Clasificar Productos</h1>
           </div>
           
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2 px-3 py-1 rounded-full text-sm bg-green-100 text-green-700">
-              <CheckCircle className="w-4 h-4" />
-              <span>Listo para clasificar</span>
-            </div>
-          </div>
+
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -540,13 +535,6 @@ export default function ClassifyPage() {
                     </span>
                   </div>
                 </div>
-                
-                {predictions[0] && predictions[0].confidence < ML_CONFIG.METRICS.CONFIDENCE_THRESHOLD && (                <div className="mt-4 p-3 bg-yellow-100 border border-yellow-200 rounded-lg">
-                  <p className="text-sm text-yellow-800 font-medium">
-                    La confianza es baja. Considera entrenar el modelo con más datos o verificar que la imagen sea clara y esté bien iluminada.
-                  </p>
-                </div>
-                )}
               </motion.div>
             )}
           </div>
