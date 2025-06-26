@@ -15,6 +15,7 @@ import {
 import Link from 'next/link';
 
 interface SavedModel {
+  id?: string;
   name: string;
   createdAt: string;
   size: string;
@@ -30,93 +31,85 @@ export default function ModelsPage() {
     loadSavedModels();
   }, []);
 
-  // Cargar modelos guardados desde localStorage
+  // Cargar modelos guardados desde el servidor
   const loadSavedModels = async () => {
     setIsLoading(true);
     try {
-      const models: SavedModel[] = [];
-      
-      // Buscar modelos en localStorage
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('tensorflowjs_models/')) {
-          const modelName = key.replace('tensorflowjs_models/', '').split('/')[0];
-          
-          // Evitar duplicados
-          if (!models.find(m => m.name === modelName)) {
-            models.push({
-              name: modelName,
-              createdAt: new Date().toISOString(),
-              size: '2.1 MB', // Placeholder
-              accuracy: Math.random() * 0.3 + 0.7,
-              classes: ['Frutas', 'Verduras', 'Lácteos']
-            });
-          }
+      const response = await fetch('/api/models');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          const models: SavedModel[] = data.models.map((model: any) => ({
+            name: model.name,
+            createdAt: model.createdAt,
+            size: `${(model.modelSize / 1024 / 1024).toFixed(1)} MB`,
+            accuracy: model.accuracy,
+            classes: model.classes,
+            id: model.id // Agregar ID para operaciones
+          }));
+          setSavedModels(models);
         }
+      } else {
+        console.error('Error cargando modelos del servidor');
+        setSavedModels([]);
       }
-      
-      setSavedModels(models);
     } catch (error) {
       console.error('Error cargando modelos:', error);
+      setSavedModels([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Eliminar modelo
-  const deleteModel = async (modelName: string) => {
-    if (!confirm(`¿Estás seguro de que quieres eliminar el modelo "${modelName}"?`)) {
+  // Eliminar modelo del servidor
+  const deleteModel = async (model: SavedModel) => {
+    if (!confirm(`¿Estás seguro de que quieres eliminar el modelo "${model.name}"?`)) {
       return;
     }
 
     try {
-      const keysToDelete = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.includes(modelName)) {
-          keysToDelete.push(key);
-        }
-      }
+      const response = await fetch(`/api/models?modelId=${model.id || model.name}`, {
+        method: 'DELETE'
+      });
       
-      keysToDelete.forEach(key => localStorage.removeItem(key));
-      await loadSavedModels();
-      alert(`Modelo "${modelName}" eliminado exitosamente`);
+      if (response.ok) {
+        await loadSavedModels();
+        alert(`Modelo "${model.name}" eliminado exitosamente`);
+      } else {
+        const errorData = await response.json();
+        alert(`Error al eliminar el modelo: ${errorData.error}`);
+      }
     } catch (error) {
+      console.error('Error eliminando modelo:', error);
       alert('Error al eliminar el modelo');
     }
   };
 
-  // Exportar modelo
-  const exportModel = async (modelName: string) => {
+  // Exportar modelo desde el servidor
+  const exportModel = async (model: SavedModel) => {
     try {
-      const modelData: { [key: string]: string } = {};
+      const response = await fetch(`/api/models?modelId=${model.id || model.name}&download=true`);
       
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.includes(modelName)) {
-          const value = localStorage.getItem(key);
-          if (value) {
-            modelData[key] = value;
-          }
-        }
+      if (response.ok) {
+        // Descargar el archivo ZIP
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${model.name}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        alert(`Modelo "${model.name}" descargado exitosamente`);
+      } else {
+        const errorData = await response.json();
+        alert(`Error al descargar el modelo: ${errorData.error}`);
       }
-      
-      const blob = new Blob([JSON.stringify(modelData, null, 2)], {
-        type: 'application/json'
-      });
-      
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${modelName}-export.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
-      alert(`Modelo "${modelName}" exportado exitosamente`);
     } catch (error) {
-      alert('Error al exportar el modelo');
+      console.error('Error descargando modelo:', error);
+      alert('Error al descargar el modelo');
     }
   };
 
@@ -166,20 +159,20 @@ export default function ModelsPage() {
           <div className="flex items-start space-x-3">
             <HardDrive className="w-5 h-5 text-blue-600 mt-0.5" />
             <div>
-              <h3 className="text-lg font-semibold text-blue-800 mb-2">Almacenamiento Local</h3>
+              <h3 className="text-lg font-semibold text-blue-800 mb-2">Almacenamiento en Servidor</h3>
               <p className="text-sm text-blue-700 mb-3">
-                Los modelos se guardan localmente en tu navegador usando localStorage. 
-                Esto significa que solo estarán disponibles en este dispositivo y navegador.
+                Los modelos se guardan automáticamente en el servidor después del entrenamiento. 
+                Están disponibles desde cualquier dispositivo y navegador.
               </p>
               <div className="flex flex-wrap gap-2 text-xs">
                 <span className="px-2 py-1 bg-blue-200 text-blue-800 rounded">
-                  ✓ Acceso offline
+                  ✓ Acceso desde cualquier dispositivo
                 </span>
                 <span className="px-2 py-1 bg-blue-200 text-blue-800 rounded">
-                  ✓ Privacidad total
+                  ✓ Almacenamiento persistente
                 </span>
-                <span className="px-2 py-1 bg-amber-200 text-amber-800 rounded">
-                  ⚠️ Solo en este navegador
+                <span className="px-2 py-1 bg-green-200 text-green-800 rounded">
+                  ✓ Guardado automático
                 </span>
               </div>
             </div>
@@ -287,7 +280,7 @@ export default function ModelsPage() {
                 {/* Acciones */}
                 <div className="flex space-x-2">
                   <button
-                    onClick={() => exportModel(model.name)}
+                    onClick={() => exportModel(model)}
                     className="btn-secondary flex-1 flex items-center justify-center space-x-1 text-sm"
                   >
                     <Download className="w-3 h-3" />
@@ -303,7 +296,7 @@ export default function ModelsPage() {
                   </Link>
                   
                   <button
-                    onClick={() => deleteModel(model.name)}
+                    onClick={() => deleteModel(model)}
                     className="btn-danger p-2"
                     title="Eliminar modelo"
                   >
@@ -326,19 +319,19 @@ export default function ModelsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-700 font-medium">
             <div>
               <h4 className="font-bold text-gray-800 mb-2">💾 Guardar modelos</h4>
-              <p>Los modelos se guardan automáticamente al completar el entrenamiento. Usa el botón "Descargar Modelo" en la página de entrenamiento.</p>
+              <p>Los modelos se guardan automáticamente en el servidor al completar el entrenamiento. Están disponibles inmediatamente en la página de modelos.</p>
             </div>
             <div>
-              <h4 className="font-bold text-gray-800 mb-2">📤 Exportar modelos</h4>
-              <p>Exporta tus modelos como archivos JSON para hacer respaldo o compartir con otros dispositivos.</p>
+              <h4 className="font-bold text-gray-800 mb-2">📤 Descargar modelos</h4>
+              <p>Descarga tus modelos como archivos ZIP completos con todos los archivos necesarios (model.json, weights.bin, metadata.json, README.txt).</p>
             </div>
             <div>
               <h4 className="font-bold text-gray-800 mb-2">🎯 Usar modelos</h4>
-              <p>Usa el botón "Usar" para ir directamente a la página de clasificación con el modelo seleccionado.</p>
+              <p>Usa el botón "Usar" para ir directamente a la página de clasificación. Luego carga los archivos de tu modelo descargado.</p>
             </div>
             <div>
-              <h4 className="font-bold text-gray-800 mb-2">🗑️ Eliminar modelos</h4>
-              <p>Elimina modelos que ya no necesites para liberar espacio en tu navegador.</p>
+              <h4 className="font-bold text-gray-800 mb-2">🌐 Acceso universal</h4>
+              <p>Accede a tus modelos desde cualquier dispositivo. Los modelos están disponibles en el servidor persistentemente.</p>
             </div>
           </div>
         </motion.div>

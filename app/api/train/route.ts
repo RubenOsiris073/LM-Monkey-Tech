@@ -45,6 +45,14 @@ export async function POST(request: NextRequest) {
     // Generar modelo completo simulado
     const completeModel = await generateCompleteModel(data.classes, mockHistory);
     
+    console.log('Modelo generado:', {
+      weightsDataLength: completeModel.weightsData.length,
+      filesWeightsLength: completeModel.files['model.weights.bin'].length,
+      metadataSize: completeModel.files['metadata.json'].length
+    });
+    
+    // Nota: El guardado automático se maneja en el cliente para evitar problemas de fetch interno
+    
     return NextResponse.json({
       success: true,
       modelId,
@@ -287,15 +295,42 @@ async function generateCompleteModel(classes: TrainingData['classes'], history: 
   };
 
   return {
-    modelTopology,
+    modelTopology: JSON.stringify(modelTopology),
     weightsManifest,
     weightsData: Array.from(new Uint8Array(weightsData)), // Convertir a array para JSON
-    metadata,
+    metadata: JSON.stringify(metadata),
     format: "tfjs-layers-model",
     files: {
-      "model.json": modelTopology,
-      "model.weights.bin": weightsData,
-      "metadata.json": metadata
+      "model.json": JSON.stringify(modelTopology),
+      "model.weights.bin": Array.from(new Uint8Array(weightsData)), // Consistente como array
+      "metadata.json": JSON.stringify(metadata),
+      "README.txt": `# Modelo de Clasificación de Productos
+
+## Información del Modelo
+- **Nombre**: ${metadata.modelName}
+- **Arquitectura**: ${metadata.architecture}
+- **Framework**: ${metadata.framework}
+- **Versión**: ${metadata.version}
+- **Fecha de Creación**: ${metadata.createdAt}
+
+## Configuración
+- **Clases**: ${metadata.labels.join(', ')}
+- **Imágenes de Entrenamiento**: ${metadata.trainedImages}
+- **Épocas**: ${metadata.epochs}
+- **Tamaño de Lote**: ${metadata.batchSize}
+
+## Métricas Finales
+- **Precisión**: ${(metadata.finalMetrics.accuracy * 100).toFixed(2)}%
+- **Pérdida**: ${metadata.finalMetrics.loss.toFixed(4)}
+
+## Uso
+1. Carga los archivos model.json, model.weights.bin y metadata.json
+2. Usa TensorFlow.js para cargar el modelo
+3. Preprocesa las imágenes a ${metadata.inputShape.join('x')}
+4. Las predicciones devuelven probabilidades para: ${metadata.labels.join(', ')}
+
+Generado por Grocery ML Classifier v1.0.0
+`
     }
   };
 }
@@ -312,6 +347,8 @@ function generateMockWeights(numClasses: number): ArrayBuffer {
   
   const totalWeights = conv1Weights + bn1Weights + conv2Weights + bn2Weights + conv3Weights + denseWeights;
   
+  console.log(`Generando ${totalWeights} pesos para ${numClasses} clases`);
+  
   // Crear buffer con pesos aleatorios simulados
   const buffer = new ArrayBuffer(totalWeights * 4); // 4 bytes por float32
   const view = new Float32Array(buffer);
@@ -322,5 +359,6 @@ function generateMockWeights(numClasses: number): ArrayBuffer {
     view[i] = (Math.random() - 0.5) * 0.2; // Valores entre -0.1 y 0.1
   }
   
+  console.log(`Buffer generado: ${buffer.byteLength} bytes`);
   return buffer;
 }

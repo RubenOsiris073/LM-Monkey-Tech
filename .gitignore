@@ -20,6 +20,9 @@
 # production
 /build
 
+# stored models (generated during runtime)
+/stored-models/
+
 # misc
 .DS_Store
 *.pem
