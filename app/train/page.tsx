@@ -32,6 +32,7 @@ interface ClassData {
 export default function TrainPage() {
   const [classes, setClasses] = useState<ClassData[]>([]);
   const [newClassName, setNewClassName] = useState('');
+  const [trainedModel, setTrainedModel] = useState<any>(null);
   
   // Usar el hook para entrenamiento en servidor
   const {
@@ -133,7 +134,8 @@ export default function TrainPage() {
     }
 
     try {
-      await startTraining(classes);
+      const result = await startTraining(classes);
+      setTrainedModel(result.modelData); // Guardar el modelo entrenado
       alert('¡Entrenamiento completado exitosamente!');
     } catch (error) {
       console.error('Error durante el entrenamiento:', error);
@@ -143,29 +145,18 @@ export default function TrainPage() {
 
   // Descargar modelo - usar función del hook
   const handleDownloadModel = () => {
-    if (!trainingMetrics) {
-      alert('No hay modelo entrenado para descargar');
+    if (!trainedModel) {
+      alert('No hay modelo entrenado para descargar. Primero debes entrenar un modelo.');
       return;
     }
     
-    // Crear datos de modelo simulados para descarga
-    const modelData = {
-      metadata: {
-        name: `grocery-model-${Date.now()}`,
-        classes: classes.map(c => c.name),
-        createdAt: new Date().toISOString(),
-        accuracy: trainingMetrics.accuracy
-      },
-      // Aquí irían los datos reales del modelo del servidor
-    };
-    
-    downloadModel(modelData);
+    downloadModel(trainedModel);
   };
 
   const totalImages = classes.reduce((sum, cls) => sum + cls.images.length, 0);
 
   return (
-    <div className="bg-main">
+    <div className="min-h-screen bg-train">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -185,7 +176,7 @@ export default function TrainPage() {
             <div className="badge-primary">
               {classes.length} clases • {totalImages} imágenes
             </div>
-            {!isTraining && classes.length > 0 && (
+            {!isTraining && trainedModel && (
               <button
                 onClick={handleDownloadModel}
                 className="btn-success"
@@ -360,7 +351,7 @@ export default function TrainPage() {
               <button
                 onClick={handleStartTraining}
                 disabled={isTraining || !validateTrainingData().valid}
-                className="w-full mt-6 flex items-center justify-center space-x-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
+                className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Play className="w-4 h-4" />
                 <span>{isTraining ? 'Entrenando...' : 'Iniciar Entrenamiento'}</span>
@@ -383,7 +374,7 @@ export default function TrainPage() {
               {isTraining && (
                 <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <p className="text-sm text-blue-800">
-                    🚀 Entrenando en el servidor... El modelo se está procesando en la nube.
+                    Entrenando en el servidor... El modelo se está procesando en la nube.
                   </p>
                 </div>
               )}
