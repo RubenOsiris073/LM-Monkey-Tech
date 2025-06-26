@@ -3,6 +3,13 @@ const nextConfig = {
   // Configuración para paquetes externos en el servidor
   serverExternalPackages: ['@tensorflow/tfjs-node', 'sharp'],
   
+  // Aumentar límites para el entrenamiento con muchas imágenes
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '50mb', // Permitir hasta 50MB para las peticiones
+    },
+  },
+  
   webpack: (config, { isServer }) => {
     if (isServer) {
       // Configuración específica para TensorFlow.js en el servidor

@@ -100,14 +100,14 @@ export default function ClassifyPage() {
       
       if (metadata.labels && Array.isArray(metadata.labels) && metadata.labels.length > 0) {
         validLabels = metadata.labels;
-        console.log('✅ Usando metadata.labels:', validLabels);
+        console.log('Usando metadata.labels:', validLabels);
       } else if (metadata.classes && Array.isArray(metadata.classes) && metadata.classes.length > 0) {
         validLabels = metadata.classes;
-        console.log('✅ Usando metadata.classes:', validLabels);
+        console.log('Usando metadata.classes:', validLabels);
         // Asignar a labels para compatibilidad
         metadata.labels = metadata.classes;
       } else {
-        console.error('❌ Validation failed - no valid labels found:', {
+        console.error('Validation failed - no valid labels found:', {
           hasLabels: !!metadata.labels,
           hasClasses: !!metadata.classes,
           labelsIsArray: Array.isArray(metadata.labels),
@@ -543,7 +543,7 @@ export default function ClassifyPage() {
                 
                 {predictions[0] && predictions[0].confidence < ML_CONFIG.METRICS.CONFIDENCE_THRESHOLD && (                <div className="mt-4 p-3 bg-yellow-100 border border-yellow-200 rounded-lg">
                   <p className="text-sm text-yellow-800 font-medium">
-                    ⚠️ La confianza es baja. Considera entrenar el modelo con más datos o verificar que la imagen sea clara y esté bien iluminada.
+                    La confianza es baja. Considera entrenar el modelo con más datos o verificar que la imagen sea clara y esté bien iluminada.
                   </p>
                 </div>
                 )}
