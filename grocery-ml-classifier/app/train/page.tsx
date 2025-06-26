@@ -165,7 +165,7 @@ export default function TrainPage() {
   const totalImages = classes.reduce((sum, cls) => sum + cls.images.length, 0);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="bg-main">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -178,17 +178,17 @@ export default function TrainPage() {
               <span>Volver al inicio</span>
             </Link>
             <div className="w-px h-6 bg-gray-300" />
-            <h1 className="text-3xl font-bold text-gray-800">Entrenar Modelo</h1>
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Entrenar Modelo</h1>
           </div>
           
           <div className="flex items-center space-x-4">
-            <div className="text-sm text-gray-600">
+            <div className="badge-primary">
               {classes.length} clases • {totalImages} imágenes
             </div>
             {!isTraining && classes.length > 0 && (
               <button
                 onClick={handleDownloadModel}
-                className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                className="btn-success"
               >
                 <Download className="w-4 h-4" />
                 <span>Descargar Modelo</span>
@@ -204,7 +204,7 @@ export default function TrainPage() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-xl shadow-sm border border-gray-100 p-6"
+              className="card-primary"
             >
               <h2 className="text-xl font-semibold text-gray-800 mb-4">Agregar Nueva Clase</h2>
               <div className="flex space-x-4">
@@ -213,13 +213,13 @@ export default function TrainPage() {
                   value={newClassName}
                   onChange={(e) => setNewClassName(e.target.value)}
                   placeholder="Nombre de la clase (ej: Manzanas)"
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="input-primary flex-1"
                   onKeyPress={(e) => e.key === 'Enter' && addClass()}
                 />
                 <button
                   onClick={addClass}
                   disabled={!newClassName.trim() || classes.length >= ML_CONFIG.MODEL.MAX_CLASSES}
-                  className="flex items-center space-x-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
+                  className="btn-info"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Agregar</span>
@@ -262,7 +262,7 @@ export default function TrainPage() {
                   </div>
 
                   {/* Zona de subida */}
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 mb-4">
+                  <div className="upload-zone mb-4">
                     <input
                       type="file"
                       multiple
@@ -273,13 +273,15 @@ export default function TrainPage() {
                     />
                     <label
                       htmlFor={`upload-${cls.id}`}
-                      className="flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 p-4 rounded-lg transition-colors"
+                      className="flex flex-col items-center justify-center cursor-pointer p-6 rounded-3xl transition-colors"
                     >
-                      <Upload className="w-8 h-8 text-gray-400 mb-2" />
-                      <span className="text-sm text-gray-600">
+                      <div className="icon-gradient mb-4">
+                        <Upload className="w-8 h-8 text-white" />
+                      </div>
+                      <span className="text-lg font-semibold text-gray-700 mb-2">
                         Arrastra imágenes aquí o haz clic para seleccionar
                       </span>
-                      <span className="text-xs text-gray-400 mt-1">
+                      <span className="text-sm text-gray-500">
                         PNG, JPG, WEBP hasta 10MB
                       </span>
                     </label>
@@ -325,16 +327,16 @@ export default function TrainPage() {
               
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Clases definidas:</span>
-                  <span className="font-medium">{classes.length}</span>
+                  <span className="text-sm font-medium text-gray-700">Clases definidas:</span>
+                  <span className="font-semibold text-gray-900">{classes.length}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Total de imágenes:</span>
-                  <span className="font-medium">{totalImages}</span>
+                  <span className="text-sm font-medium text-gray-700">Total de imágenes:</span>
+                  <span className="font-semibold text-gray-900">{totalImages}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Estado:</span>
-                  <span className={`font-medium ${isTraining ? 'text-blue-600' : 'text-gray-800'}`}>
+                  <span className="text-sm font-medium text-gray-700">Estado:</span>
+                  <span className={`font-semibold ${isTraining ? 'text-blue-600' : 'text-green-600'}`}>
                     {isTraining ? 'Entrenando...' : 'Listo'}
                   </span>
                 </div>
@@ -342,9 +344,9 @@ export default function TrainPage() {
 
               {isTraining && (
                 <div className="mt-4">
-                  <div className="flex justify-between text-sm text-gray-600 mb-2">
+                  <div className="flex justify-between text-sm font-medium text-gray-700 mb-2">
                     <span>Progreso</span>
-                    <span>{Math.round(trainingProgress)}%</span>
+                    <span className="text-blue-600">{Math.round(trainingProgress)}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div 
@@ -401,21 +403,21 @@ export default function TrainPage() {
                 
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Época:</span>
-                    <span className="font-medium">{trainingMetrics.epoch}/{ML_CONFIG.TRAINING.DEFAULT_EPOCHS}</span>
+                    <span className="text-sm font-medium text-gray-700">Época:</span>
+                    <span className="font-semibold text-gray-900">{trainingMetrics.epoch}/{ML_CONFIG.TRAINING.DEFAULT_EPOCHS}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Pérdida:</span>
-                    <span className="font-medium">{trainingMetrics.loss.toFixed(4)}</span>
+                    <span className="text-sm font-medium text-gray-700">Pérdida:</span>
+                    <span className="font-semibold text-gray-900">{trainingMetrics.loss.toFixed(4)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Precisión:</span>
-                    <span className="font-medium">{(trainingMetrics.accuracy * 100).toFixed(1)}%</span>
+                    <span className="text-sm font-medium text-gray-700">Precisión:</span>
+                    <span className="font-semibold text-green-600">{(trainingMetrics.accuracy * 100).toFixed(1)}%</span>
                   </div>
                   {trainingMetrics.valAccuracy && (
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Precisión Val:</span>
-                      <span className="font-medium">{(trainingMetrics.valAccuracy * 100).toFixed(1)}%</span>
+                      <span className="text-sm font-medium text-gray-700">Precisión Val:</span>
+                      <span className="font-semibold text-blue-600">{(trainingMetrics.valAccuracy * 100).toFixed(1)}%</span>
                     </div>
                   )}
                 </div>

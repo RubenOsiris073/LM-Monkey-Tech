@@ -110,22 +110,99 @@ export function useServerTraining(): UseServerTrainingReturn {
   // Descargar modelo entrenado
   const downloadModel = useCallback((modelData: any) => {
     try {
+      if (!modelData || !modelData.files) {
+        // Fallback para modelos sin estructura completa
+        const blob = new Blob([JSON.stringify(modelData, null, 2)], {
+          type: 'application/json'
+        });
+        
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `grocery-model-${Date.now()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        return;
+      }
+
+      // Crear archivo ZIP con todos los componentes del modelo
+      const modelName = modelData.metadata?.name || `grocery-model-${Date.now()}`;
+      
+      // 1. Descargar model.json (topología)
+      const modelJsonBlob = new Blob([JSON.stringify(modelData.modelTopology, null, 2)], {
+        type: 'application/json'
+      });
+      downloadFile(modelJsonBlob, `${modelName}-model.json`);
+
+      // 2. Descargar model.weights.bin (pesos binarios)
+      const weightsArray = new Uint8Array(modelData.weightsData);
+      const weightsBlob = new Blob([weightsArray], {
+        type: 'application/octet-stream'
+      });
+      downloadFile(weightsBlob, `${modelName}-model.weights.bin`);
+
+      // 3. Descargar metadata.json (metadatos completos)
+      const metadataBlob = new Blob([JSON.stringify(modelData.metadata, null, 2)], {
+        type: 'application/json'
+      });
+      downloadFile(metadataBlob, `${modelName}-metadata.json`);
+
+      // 4. Descargar README.txt con instrucciones
+      const readmeContent = `# Modelo de Clasificación de Productos Grocery ML
+      
+Modelo entrenado: ${modelData.metadata?.name}
+Fecha de entrenamiento: ${modelData.metadata?.createdAt}
+Clases: ${modelData.metadata?.classes?.join(', ')}
+Precisión final: ${(modelData.metadata?.finalMetrics?.accuracy * 100).toFixed(2)}%
+
+## Archivos incluidos:
+- ${modelName}-model.json: Topología del modelo (arquitectura de la red neuronal)
+- ${modelName}-model.weights.bin: Pesos entrenados del modelo (archivo binario)
+- ${modelName}-metadata.json: Metadatos completos del entrenamiento
+
+## Cómo usar:
+1. Para cargar en TensorFlow.js: tf.loadLayersModel('ruta/al/model.json')
+2. Para usar en esta aplicación: sube todos los archivos a la página de modelos
+3. El modelo espera imágenes de 224x224 píxeles, normalizadas entre 0-1
+
+## Estructura del modelo:
+${JSON.stringify(modelData.modelTopology.modelTopology.config.layers.map((layer: any) => ({
+  type: layer.class_name,
+  name: layer.config.name
+})), null, 2)}
+`;
+
+      const readmeBlob = new Blob([readmeContent], {
+        type: 'text/plain'
+      });
+      downloadFile(readmeBlob, `${modelName}-README.txt`);
+
+      console.log(`Modelo ${modelName} descargado con ${Object.keys(modelData.files).length} archivos`);
+      
+    } catch (error) {
+      console.error('Error descargando modelo:', error);
+      // Fallback para descarga simple
       const blob = new Blob([JSON.stringify(modelData, null, 2)], {
         type: 'application/json'
       });
-      
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `grocery-model-${Date.now()}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Error descargando modelo:', error);
+      downloadFile(blob, `grocery-model-${Date.now()}.json`);
     }
   }, []);
+
+  // Función auxiliar para descargar archivos
+  const downloadFile = (blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   return {
     isTraining,

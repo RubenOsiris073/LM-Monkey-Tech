@@ -106,7 +106,7 @@ export default function ClassifyPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100">
+    <div className="min-h-screen bg-classify">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -137,7 +137,7 @@ export default function ClassifyPage() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-xl shadow-sm border border-gray-100 p-6"
+              className="card-primary"
             >
               <h2 className="text-xl font-semibold text-gray-800 mb-4">Seleccionar Imagen</h2>
               
@@ -179,7 +179,7 @@ export default function ClassifyPage() {
                   <div className="flex space-x-3">
                     <button
                       onClick={() => fileInputRef.current?.click()}
-                      className="flex items-center space-x-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                      className="btn-secondary flex items-center space-x-2"
                     >
                       <Camera className="w-4 h-4" />
                       <span>Cambiar imagen</span>
@@ -188,7 +188,7 @@ export default function ClassifyPage() {
                     <button
                       onClick={classifyImage}
                       disabled={!selectedImage || isClassifying}
-                      className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-400 transition-colors"
+                      className="btn-primary flex-1 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Target className="w-4 h-4" />
                       <span>{isClassifying ? 'Clasificando...' : 'Clasificar'}</span>
@@ -211,20 +211,20 @@ export default function ClassifyPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="bg-blue-50 rounded-xl border border-blue-100 p-6"
+              className="card-info"
             >
               <h3 className="text-lg font-semibold text-blue-800 mb-3">Cómo usar</h3>
-              <ol className="space-y-2 text-sm text-blue-700">
+              <ol className="space-y-2 text-sm text-gray-700 font-medium">
                 <li className="flex items-start space-x-2">
-                  <span className="flex-shrink-0 w-5 h-5 bg-blue-200 rounded-full flex items-center justify-center text-xs font-medium">1</span>
+                  <span className="flex-shrink-0 w-5 h-5 bg-blue-200 rounded-full flex items-center justify-center text-xs font-bold text-blue-800">1</span>
                   <span>Sube una imagen del producto que quieres clasificar</span>
                 </li>
                 <li className="flex items-start space-x-2">
-                  <span className="flex-shrink-0 w-5 h-5 bg-blue-200 rounded-full flex items-center justify-center text-xs font-medium">2</span>
+                  <span className="flex-shrink-0 w-5 h-5 bg-blue-200 rounded-full flex items-center justify-center text-xs font-bold text-blue-800">2</span>
                   <span>Haz clic en "Clasificar" para obtener las predicciones</span>
                 </li>
                 <li className="flex items-start space-x-2">
-                  <span className="flex-shrink-0 w-5 h-5 bg-blue-200 rounded-full flex items-center justify-center text-xs font-medium">3</span>
+                  <span className="flex-shrink-0 w-5 h-5 bg-blue-200 rounded-full flex items-center justify-center text-xs font-bold text-blue-800">3</span>
                   <span>La clasificación se procesa en el servidor en la nube</span>
                 </li>
               </ol>
@@ -238,7 +238,7 @@ export default function ClassifyPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-white rounded-xl shadow-sm border border-gray-100 p-6"
+              className="card-primary"
             >
               <h2 className="text-xl font-semibold text-gray-800 mb-4">Resultados</h2>
               
@@ -296,36 +296,35 @@ export default function ClassifyPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="bg-gray-50 rounded-xl border border-gray-100 p-6"
+                className="card-warning"
               >
                 <h3 className="text-lg font-semibold text-gray-800 mb-3">Interpretación</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center space-x-2">
                     <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <span className="text-gray-600">
+                    <span className="text-gray-700 font-medium">
                       <strong>Alta confianza (≥80%)</strong>: Predicción muy confiable
                     </span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                    <span className="text-gray-600">
+                    <span className="text-gray-700 font-medium">
                       <strong>Media confianza (60-79%)</strong>: Predicción moderadamente confiable
                     </span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                    <span className="text-gray-600">
+                    <span className="text-gray-700 font-medium">
                       <strong>Baja confianza (&lt;60%)</strong>: Predicción poco confiable
                     </span>
                   </div>
                 </div>
                 
-                {predictions[0] && predictions[0].confidence < ML_CONFIG.METRICS.CONFIDENCE_THRESHOLD && (
-                  <div className="mt-4 p-3 bg-yellow-100 border border-yellow-200 rounded-lg">
-                    <p className="text-sm text-yellow-800">
-                      ⚠️ La confianza es baja. Considera entrenar el modelo con más datos o verificar que la imagen sea clara y esté bien iluminada.
-                    </p>
-                  </div>
+                {predictions[0] && predictions[0].confidence < ML_CONFIG.METRICS.CONFIDENCE_THRESHOLD && (                <div className="mt-4 p-3 bg-yellow-100 border border-yellow-200 rounded-lg">
+                  <p className="text-sm text-yellow-800 font-medium">
+                    ⚠️ La confianza es baja. Considera entrenar el modelo con más datos o verificar que la imagen sea clara y esté bien iluminada.
+                  </p>
+                </div>
                 )}
               </motion.div>
             )}

@@ -127,7 +127,7 @@ export default function ModelsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-100">
+    <div className="min-h-screen bg-models">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -149,7 +149,7 @@ export default function ModelsPage() {
             </div>
             <button
               onClick={loadSavedModels}
-              className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              className="btn-primary flex items-center space-x-2"
             >
               <Brain className="w-4 h-4" />
               <span>Actualizar</span>
@@ -161,7 +161,7 @@ export default function ModelsPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-blue-50 rounded-xl border border-blue-100 p-6 mb-8"
+          className="card-info mb-8"
         >
           <div className="flex items-start space-x-3">
             <HardDrive className="w-5 h-5 text-blue-600 mt-0.5" />
@@ -196,7 +196,7 @@ export default function ModelsPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center"
+            className="card-primary text-center"
           >
             <Brain className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-800 mb-2">No hay modelos guardados</h3>
@@ -205,7 +205,7 @@ export default function ModelsPage() {
             </p>
             <Link
               href="/train"
-              className="inline-flex items-center space-x-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              className="btn-primary inline-flex items-center space-x-2"
             >
               <Brain className="w-4 h-4" />
               <span>Entrenar Modelo</span>
@@ -219,7 +219,7 @@ export default function ModelsPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow"
+                className="card-primary hover:shadow-md transition-shadow"
               >
                 {/* Header del modelo */}
                 <div className="flex items-start justify-between mb-4">
@@ -288,15 +288,15 @@ export default function ModelsPage() {
                 <div className="flex space-x-2">
                   <button
                     onClick={() => exportModel(model.name)}
-                    className="flex-1 flex items-center justify-center space-x-1 px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+                    className="btn-secondary flex-1 flex items-center justify-center space-x-1 text-sm"
                   >
                     <Download className="w-3 h-3" />
-                    <span>Exportar</span>
+                    <span>Descargar</span>
                   </button>
                   
                   <Link
                     href="/classify"
-                    className="flex-1 flex items-center justify-center space-x-1 px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
+                    className="btn-primary flex-1 flex items-center justify-center space-x-1 text-sm"
                   >
                     <ExternalLink className="w-3 h-3" />
                     <span>Usar</span>
@@ -304,7 +304,7 @@ export default function ModelsPage() {
                   
                   <button
                     onClick={() => deleteModel(model.name)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    className="btn-danger p-2"
                     title="Eliminar modelo"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -320,24 +320,24 @@ export default function ModelsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="mt-12 bg-gray-50 rounded-xl border border-gray-100 p-6"
+          className="card-secondary mt-12"
         >
           <h3 className="text-lg font-semibold text-gray-800 mb-4">Cómo gestionar tus modelos</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-600">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-700 font-medium">
             <div>
-              <h4 className="font-medium text-gray-800 mb-2">💾 Guardar modelos</h4>
+              <h4 className="font-bold text-gray-800 mb-2">💾 Guardar modelos</h4>
               <p>Los modelos se guardan automáticamente al completar el entrenamiento. Usa el botón "Descargar Modelo" en la página de entrenamiento.</p>
             </div>
             <div>
-              <h4 className="font-medium text-gray-800 mb-2">📤 Exportar modelos</h4>
+              <h4 className="font-bold text-gray-800 mb-2">📤 Exportar modelos</h4>
               <p>Exporta tus modelos como archivos JSON para hacer respaldo o compartir con otros dispositivos.</p>
             </div>
             <div>
-              <h4 className="font-medium text-gray-800 mb-2">🎯 Usar modelos</h4>
+              <h4 className="font-bold text-gray-800 mb-2">🎯 Usar modelos</h4>
               <p>Usa el botón "Usar" para ir directamente a la página de clasificación con el modelo seleccionado.</p>
             </div>
             <div>
-              <h4 className="font-medium text-gray-800 mb-2">🗑️ Eliminar modelos</h4>
+              <h4 className="font-bold text-gray-800 mb-2">🗑️ Eliminar modelos</h4>
               <p>Elimina modelos que ya no necesites para liberar espacio en tu navegador.</p>
             </div>
           </div>
