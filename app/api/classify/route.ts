@@ -1,35 +1,61 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-interface ClassificationRequest {
-  image: string; // Base64 encoded image
-  modelId?: string;
-  classes?: string[];
-}
-
 interface Prediction {
   className: string;
   confidence: number;
 }
 
+interface ModelMetadata {
+  labels: string[];
+  inputShape: number[];
+  modelName: string;
+  version: string;
+  createdAt: string;
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const data: ClassificationRequest = await request.json();
+    const formData = await request.formData();
     
-    if (!data.image) {
+    const image = formData.get('image') as string;
+    const modelJson = formData.get('modelJson') as File;
+    const weightsFile = formData.get('weightsFile') as File;
+    const metadataJson = formData.get('metadataJson') as File;
+
+    if (!image) {
       return NextResponse.json(
         { error: 'No se proporcionó imagen' },
         { status: 400 }
       );
     }
 
-    // Por ahora simularemos la clasificación
-    const predictions = await simulateClassification(data);
+    if (!modelJson || !weightsFile || !metadataJson) {
+      return NextResponse.json(
+        { error: 'Se requieren los 3 archivos del modelo: model.json, weights.bin y metadata.json' },
+        { status: 400 }
+      );
+    }
+
+    // Leer y parsear metadata
+    const metadataText = await metadataJson.text();
+    const metadata: ModelMetadata = JSON.parse(metadataText);
+
+    if (!metadata.labels || !Array.isArray(metadata.labels)) {
+      return NextResponse.json(
+        { error: 'El archivo metadata.json debe contener un array de labels válido' },
+        { status: 400 }
+      );
+    }
+
+    // Simular la clasificación con el modelo personalizado
+    const predictions = await simulateClassificationWithCustomModel(image, metadata);
     
     return NextResponse.json({
       success: true,
       predictions,
-      modelId: data.modelId || 'default-model',
-      message: 'Clasificación realizada (simulación por compatibilidad)'
+      modelName: metadata.modelName || 'Modelo personalizado',
+      totalClasses: metadata.labels.length,
+      message: 'Clasificación realizada con modelo personalizado (simulación por compatibilidad)'
     });
 
   } catch (error) {
@@ -41,41 +67,30 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function simulateClassification(data: ClassificationRequest): Promise<Prediction[]> {
+async function simulateClassificationWithCustomModel(
+  image: string, 
+  metadata: ModelMetadata
+): Promise<Prediction[]> {
   // Simular un pequeño retraso para el procesamiento
-  await new Promise(resolve => setTimeout(resolve, 500));
+  await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
 
-  // Clases predeterminadas o usar las proporcionadas
-  const defaultClasses = ['Manzanas', 'Plátanos', 'Naranjas', 'Fresas', 'Uvas'];
-  const classes = data.classes || defaultClasses;
+  const labels = metadata.labels;
   
-  // Generar predicciones simuladas con distribución realista
-  const predictions: Prediction[] = classes.map((className, index) => {
-    let confidence: number;
-    
-    if (index === 0) {
-      // La primera clase tiene mayor probabilidad
-      confidence = 0.6 + Math.random() * 0.3; // 60-90%
-    } else if (index === 1) {
-      // La segunda clase tiene probabilidad media
-      confidence = 0.1 + Math.random() * 0.2; // 10-30%
-    } else {
-      // Las demás clases tienen probabilidad baja
-      confidence = Math.random() * 0.1; // 0-10%
-    }
-    
-    return {
-      className,
-      confidence: Math.round(confidence * 100) / 100
-    };
-  });
-
-  // Normalizar para que sumen 1
-  const total = predictions.reduce((sum, pred) => sum + pred.confidence, 0);
-  predictions.forEach(pred => {
-    pred.confidence = Math.round((pred.confidence / total) * 100) / 100;
-  });
+  // Generar predicciones simuladas basadas en las clases del modelo
+  const predictions: Prediction[] = labels.map((label, index) => ({
+    className: label,
+    confidence: Math.random() * 0.4 + (index === 0 ? 0.5 : 0.1) // La primera clase tiene más confianza
+  }));
 
   // Ordenar por confianza descendente
-  return predictions.sort((a, b) => b.confidence - a.confidence);
+  predictions.sort((a, b) => b.confidence - a.confidence);
+
+  // Normalizar las confianzas para que sumen ~1
+  const totalConfidence = predictions.reduce((sum, p) => sum + p.confidence, 0);
+  predictions.forEach(p => {
+    p.confidence = p.confidence / totalConfidence;
+  });
+
+  // Retornar las top 5 predicciones
+  return predictions.slice(0, Math.min(5, labels.length));
 }

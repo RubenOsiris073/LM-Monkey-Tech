@@ -116,7 +116,7 @@ export function useServerTraining(): UseServerTrainingReturn {
         return;
       }
 
-      const modelName = modelData.metadata?.name || `grocery-model-${Date.now()}`;
+      const modelName = modelData.metadata?.modelName || modelData.metadata?.name || `grocery-model-${Date.now()}`;
       const zip = new JSZip();
 
       // 1. Agregar model.json (topología del modelo)
@@ -141,9 +141,9 @@ export function useServerTraining(): UseServerTrainingReturn {
       // 4. Agregar README.txt con instrucciones
       const readmeContent = `# Modelo de Clasificación de Productos Grocery ML
 
-Modelo entrenado: ${modelData.metadata?.name || 'Sin nombre'}
+Modelo entrenado: ${modelData.metadata?.modelName || modelData.metadata?.name || 'Sin nombre'}
 Fecha de entrenamiento: ${modelData.metadata?.createdAt || new Date().toISOString()}
-Clases: ${modelData.metadata?.classes?.join(', ') || 'No especificadas'}
+Clases: ${modelData.metadata?.labels?.join(', ') || modelData.metadata?.classes?.join(', ') || 'No especificadas'}
 Precisión final: ${modelData.metadata?.finalMetrics?.accuracy ? (modelData.metadata.finalMetrics.accuracy * 100).toFixed(2) + '%' : 'No disponible'}
 
 ## Archivos incluidos:
@@ -159,7 +159,7 @@ Precisión final: ${modelData.metadata?.finalMetrics?.accuracy ? (modelData.meta
 ## Estructura del modelo:
 ${modelData.metadata?.architecture || 'CNN (Convolutional Neural Network)'}
 - Input: ${modelData.metadata?.inputShape?.join('x') || '224x224x3'}
-- Output: ${modelData.metadata?.outputShape?.[0] || modelData.metadata?.classes?.length || 'N/A'} clases
+- Output: ${modelData.metadata?.outputShape?.[0] || modelData.metadata?.numClasses || modelData.metadata?.labels?.length || modelData.metadata?.classes?.length || 'N/A'} clases
 - Parámetros entrenables: ${modelData.metadata?.modelSize ? Math.round(modelData.metadata.modelSize / 1024) + ' KB' : 'No disponible'}
 
 ## Métricas de entrenamiento:

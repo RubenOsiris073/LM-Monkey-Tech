@@ -242,10 +242,14 @@ async function generateCompleteModel(classes: TrainingData['classes'], history: 
   ];
 
   // Metadatos completos del modelo
+  const modelName = `grocery-model-${Date.now()}`;
   const metadata = {
-    name: `grocery-model-${Date.now()}`,
-    classes: classes.map(c => c.name),
-    classLabels: classes.map((c, i) => ({ id: i, name: c.name })),
+    modelName: modelName,
+    name: modelName,
+    labels: classes.map(c => c.name), // Array de strings con los nombres de las clases
+    classes: classes.map(c => c.name), // Compatibilidad adicional
+    classLabels: classes.map((c, i) => ({ id: i, name: c.name })), // Array de objetos
+    numClasses: numClasses,
     inputShape: inputShape,
     outputShape: [numClasses],
     architecture: "CNN",
@@ -272,7 +276,14 @@ async function generateCompleteModel(classes: TrainingData['classes'], history: 
       normalization: "0-1",
       channels: 3,
       dataFormat: "channels_last"
-    }
+    },
+    // Información adicional para la carga del modelo
+    modelFiles: {
+      model: `${modelName}-model.json`,
+      weights: `${modelName}-model.weights.bin`,
+      metadata: `${modelName}-metadata.json`
+    },
+    compatibilityVersion: "1.0"
   };
 
   return {

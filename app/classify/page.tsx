@@ -9,15 +9,42 @@ import {
   CheckCircle, 
   AlertCircle,
   Zap,
-  Target
+  Target,
+  FolderOpen,
+  FileText,
+  Settings
 } from 'lucide-react';
 import Link from 'next/link';
 import { ML_CONFIG } from '@/src/config/ml-config';
-import { MLTrainer } from '@/src/utils/ml-trainer';
 
 interface Prediction {
   className: string;
   confidence: number;
+}
+
+interface ModelFiles {
+  modelJson: File | null;
+  weightsFile: File | null;
+  metadataJson: File | null;
+}
+
+interface ModelMetadata {
+  modelName?: string;
+  name?: string;
+  labels: string[]; // Array de nombres de clases - REQUERIDO
+  classes?: string[]; // Compatibilidad adicional
+  classLabels?: { id: number; name: string }[];
+  numClasses?: number;
+  inputShape?: number[];
+  outputShape?: number[];
+  architecture?: string;
+  framework?: string;
+  version?: string;
+  createdAt?: string;
+  finalMetrics?: {
+    accuracy?: number;
+    loss?: number;
+  };
 }
 
 export default function ClassifyPage() {
@@ -25,20 +52,108 @@ export default function ClassifyPage() {
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [isClassifying, setIsClassifying] = useState(false);
   const [modelLoaded, setModelLoaded] = useState(false);
-  const [trainer] = useState(() => new MLTrainer());
+  const [modelFiles, setModelFiles] = useState<ModelFiles>({
+    modelJson: null,
+    weightsFile: null,
+    metadataJson: null
+  });
+  const [modelMetadata, setModelMetadata] = useState<ModelMetadata | null>(null);
+  const [isLoadingModel, setIsLoadingModel] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
+  const modelJsonRef = useRef<HTMLInputElement>(null);
+  const weightsRef = useRef<HTMLInputElement>(null);
+  const metadataRef = useRef<HTMLInputElement>(null);
 
-  // Cargar modelo guardado
-  const loadModel = async () => {
-    try {
-      await trainer.loadModel('grocery-model-latest');
-      setModelLoaded(true);
-      alert('Modelo cargado exitosamente');
-    } catch (error) {
-      console.error('Error cargando modelo:', error);
-      alert('Error al cargar el modelo. Asegúrate de haber entrenado y guardado un modelo primero.');
+  // Manejar selección de archivos del modelo
+  const handleModelFileSelect = (type: keyof ModelFiles, file: File) => {
+    setModelFiles(prev => ({
+      ...prev,
+      [type]: file
+    }));
+  };
+
+  // Cargar y validar el modelo personalizado
+  const loadCustomModel = async () => {
+    const { modelJson, weightsFile, metadataJson } = modelFiles;
+    
+    if (!modelJson || !weightsFile || !metadataJson) {
+      alert('Por favor selecciona los 3 archivos requeridos: model.json, model.weights.bin y metadata.json');
+      return;
     }
+
+    setIsLoadingModel(true);
+    
+    try {
+      // Leer y validar el archivo metadata.json
+      const metadataText = await metadataJson.text();
+      console.log('Metadata text content:', metadataText);
+      const metadata: ModelMetadata = JSON.parse(metadataText);
+      console.log('Parsed metadata:', metadata);
+      console.log('Metadata labels:', metadata.labels);
+      console.log('Metadata classes:', metadata.classes);
+      console.log('Is labels array?', Array.isArray(metadata.labels));
+      console.log('Is classes array?', Array.isArray(metadata.classes));
+      
+      // Verificar si tiene labels o classes válidos
+      let validLabels: string[] | null = null;
+      
+      if (metadata.labels && Array.isArray(metadata.labels) && metadata.labels.length > 0) {
+        validLabels = metadata.labels;
+        console.log('✅ Usando metadata.labels:', validLabels);
+      } else if (metadata.classes && Array.isArray(metadata.classes) && metadata.classes.length > 0) {
+        validLabels = metadata.classes;
+        console.log('✅ Usando metadata.classes:', validLabels);
+        // Asignar a labels para compatibilidad
+        metadata.labels = metadata.classes;
+      } else {
+        console.error('❌ Validation failed - no valid labels found:', {
+          hasLabels: !!metadata.labels,
+          hasClasses: !!metadata.classes,
+          labelsIsArray: Array.isArray(metadata.labels),
+          classesIsArray: Array.isArray(metadata.classes),
+          labelsLength: metadata.labels?.length,
+          classesLength: metadata.classes?.length,
+          fullMetadata: metadata
+        });
+        throw new Error('El archivo metadata.json debe contener un array de labels o classes válido');
+      }
+
+      // Leer el archivo model.json para validación
+      const modelJsonText = await modelJson.text();
+      const modelConfig = JSON.parse(modelJsonText);
+      
+      if (!modelConfig.modelTopology) {
+        throw new Error('El archivo model.json no tiene una estructura válida de TensorFlow.js');
+      }
+
+      // Validar que el archivo de pesos existe y tiene el tamaño correcto
+      if (weightsFile.size === 0) {
+        throw new Error('El archivo de pesos está vacío');
+      }
+
+      setModelMetadata(metadata);
+      setModelLoaded(true);
+      alert(`Modelo "${metadata.modelName || metadata.name || 'Custom Model'}" cargado exitosamente con ${metadata.labels.length} clases: ${metadata.labels.join(', ')}`);
+      
+    } catch (error) {
+      console.error('Error cargando modelo personalizado:', error);
+      alert('Error al cargar el modelo: ' + (error as Error).message);
+    } finally {
+      setIsLoadingModel(false);
+    }
+  };
+
+  // Resetear modelo cargado
+  const resetModel = () => {
+    setModelFiles({
+      modelJson: null,
+      weightsFile: null,
+      metadataJson: null
+    });
+    setModelMetadata(null);
+    setModelLoaded(false);
+    setPredictions([]);
   };
 
   // Manejar selección de imagen y convertir a base64
@@ -59,27 +174,32 @@ export default function ClassifyPage() {
     }
   };
 
-  // Clasificar imagen usando el servidor
+  // Clasificar imagen usando el modelo personalizado cargado
   const classifyImage = async () => {
     if (!selectedImage) {
       alert('Selecciona una imagen primero');
       return;
     }
 
+    if (!modelLoaded || !modelMetadata) {
+      alert('Primero carga un modelo válido');
+      return;
+    }
+
     setIsClassifying(true);
     
     try {
-      // Enviar imagen al servidor para clasificación
+      // Crear FormData para enviar los archivos del modelo y la imagen
+      const formData = new FormData();
+      formData.append('image', selectedImage);
+      formData.append('modelJson', modelFiles.modelJson!);
+      formData.append('weightsFile', modelFiles.weightsFile!);
+      formData.append('metadataJson', modelFiles.metadataJson!);
+
+      // Enviar al servidor para clasificación
       const response = await fetch('/api/classify', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          image: selectedImage,
-          modelId: 'grocery-model-latest',
-          classes: ['Manzanas', 'Plátanos', 'Naranjas', 'Fresas', 'Uvas', 'Tomates', 'Zanahorias', 'Lechuga']
-        }),
+        body: formData,
       });
 
       if (!response.ok) {
@@ -130,8 +250,129 @@ export default function ClassifyPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Panel izquierdo - Subida y visualización de imagen */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Panel izquierdo - Carga del modelo */}
+          <div className="space-y-6">
+            {/* Carga de modelo personalizado */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="card-primary"
+            >
+              <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center space-x-2">
+                <Settings className="w-5 h-5" />
+                <span>Cargar Modelo</span>
+              </h2>
+              
+              {!modelLoaded ? (
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-600 mb-4">
+                    Carga los 3 archivos esenciales de tu modelo entrenado:
+                  </p>
+                  
+                  {/* model.json */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      1. model.json
+                    </label>
+                    <input
+                      ref={modelJsonRef}
+                      type="file"
+                      accept=".json"
+                      onChange={(e) => e.target.files?.[0] && handleModelFileSelect('modelJson', e.target.files[0])}
+                      className="input-primary"
+                    />
+                    {modelFiles.modelJson && (
+                      <p className="text-xs text-green-600 mt-1">✓ {modelFiles.modelJson.name}</p>
+                    )}
+                  </div>
+
+                  {/* model.weights.bin */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      2. model.weights.bin
+                    </label>
+                    <input
+                      ref={weightsRef}
+                      type="file"
+                      accept=".bin"
+                      onChange={(e) => e.target.files?.[0] && handleModelFileSelect('weightsFile', e.target.files[0])}
+                      className="input-primary"
+                    />
+                    {modelFiles.weightsFile && (
+                      <p className="text-xs text-green-600 mt-1">✓ {modelFiles.weightsFile.name}</p>
+                    )}
+                  </div>
+
+                  {/* metadata.json */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      3. metadata.json
+                    </label>
+                    <input
+                      ref={metadataRef}
+                      type="file"
+                      accept=".json"
+                      onChange={(e) => e.target.files?.[0] && handleModelFileSelect('metadataJson', e.target.files[0])}
+                      className="input-primary"
+                    />
+                    {modelFiles.metadataJson && (
+                      <p className="text-xs text-green-600 mt-1">✓ {modelFiles.metadataJson.name}</p>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={loadCustomModel}
+                    disabled={!modelFiles.modelJson || !modelFiles.weightsFile || !modelFiles.metadataJson || isLoadingModel}
+                    className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isLoadingModel ? 'Cargando modelo...' : 'Cargar Modelo'}
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-2 text-green-600">
+                    <CheckCircle className="w-5 h-5" />
+                    <span className="font-medium">Modelo cargado</span>
+                  </div>
+                  
+                  {modelMetadata && (
+                    <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                      <p className="text-sm text-green-800">
+                        <strong>Nombre:</strong> {modelMetadata.modelName || 'Modelo personalizado'}
+                      </p>
+                      <p className="text-sm text-green-800">
+                        <strong>Clases:</strong> {modelMetadata.labels.length}
+                      </p>
+                      <div className="mt-2">
+                        <div className="flex flex-wrap gap-1">
+                          {modelMetadata.labels.slice(0, 3).map((label, idx) => (
+                            <span key={idx} className="px-2 py-1 bg-green-200 text-green-800 text-xs rounded">
+                              {label}
+                            </span>
+                          ))}
+                          {modelMetadata.labels.length > 3 && (
+                            <span className="px-2 py-1 bg-green-200 text-green-800 text-xs rounded">
+                              +{modelMetadata.labels.length - 3}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <button
+                    onClick={resetModel}
+                    className="btn-secondary w-full"
+                  >
+                    Cargar otro modelo
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          </div>
+
+          {/* Panel central - Subida y visualización de imagen */}
           <div className="space-y-6">
             {/* Zona de subida */}
             <motion.div
@@ -187,11 +428,13 @@ export default function ClassifyPage() {
                     
                     <button
                       onClick={classifyImage}
-                      disabled={!selectedImage || isClassifying}
+                      disabled={!selectedImage || isClassifying || !modelLoaded}
                       className="btn-primary flex-1 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Target className="w-4 h-4" />
-                      <span>{isClassifying ? 'Clasificando...' : 'Clasificar'}</span>
+                      <span>
+                        {isClassifying ? 'Clasificando...' : !modelLoaded ? 'Carga un modelo primero' : 'Clasificar'}
+                      </span>
                     </button>
                   </div>
                   
@@ -206,29 +449,7 @@ export default function ClassifyPage() {
               )}
             </motion.div>
 
-            {/* Instrucciones */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="card-info"
-            >
-              <h3 className="text-lg font-semibold text-blue-800 mb-3">Cómo usar</h3>
-              <ol className="space-y-2 text-sm text-gray-700 font-medium">
-                <li className="flex items-start space-x-2">
-                  <span className="flex-shrink-0 w-5 h-5 bg-blue-200 rounded-full flex items-center justify-center text-xs font-bold text-blue-800">1</span>
-                  <span>Sube una imagen del producto que quieres clasificar</span>
-                </li>
-                <li className="flex items-start space-x-2">
-                  <span className="flex-shrink-0 w-5 h-5 bg-blue-200 rounded-full flex items-center justify-center text-xs font-bold text-blue-800">2</span>
-                  <span>Haz clic en "Clasificar" para obtener las predicciones</span>
-                </li>
-                <li className="flex items-start space-x-2">
-                  <span className="flex-shrink-0 w-5 h-5 bg-blue-200 rounded-full flex items-center justify-center text-xs font-bold text-blue-800">3</span>
-                  <span>La clasificación se procesa en el servidor en la nube</span>
-                </li>
-              </ol>
-            </motion.div>
+
           </div>
 
           {/* Panel derecho - Resultados */}
