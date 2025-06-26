@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrenar Modelo - Clasificador de Camisas</title>
+    <link rel="stylesheet" href="src/css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎽 Entrenar Modelo de Camisas</h1>
+            <p>Entrena un modelo personalizado para clasificar camisas rojas, grises y azules</p>
+            <div class="nav-buttons">
+                <a href="index.html" class="nav-btn">🏠 Ir al Clasificador</a>
+                <button id="clearDataBtn" class="nav-btn">🗑️ Limpiar Datos</button>
+            </div>
+        </header>
+
+        <main>
+            <div class="training-section">
+                <h2>📁 Cargar Imágenes de Entrenamiento</h2>
+                <div class="requirements-info">
+                    <p>📋 <strong>Requisitos:</strong> Mínimo 3 imágenes por categoría para entrenar el modelo</p>
+                </div>
+                
+                <div class="category-section">
+                    <h3>🔴 Camisas Rojas</h3>
+                    <input type="file" id="redShirts" multiple accept="image/*" class="file-input">
+                    <label for="redShirts" class="upload-label">📁 Seleccionar imágenes de camisas rojas</label>
+                    <div id="redPreview" class="image-preview"></div>
+                    <span id="redCount" class="count">0 imágenes</span>
+                </div>
+                
+                <div class="category-section">
+                    <h3>⚫ Camisas Grises</h3>
+                    <input type="file" id="grayShirts" multiple accept="image/*" class="file-input">
+                    <label for="grayShirts" class="upload-label">📁 Seleccionar imágenes de camisas grises</label>
+                    <div id="grayPreview" class="image-preview"></div>
+                    <span id="grayCount" class="count">0 imágenes</span>
+                </div>
+                
+                <div class="category-section">
+                    <h3>🔵 Camisas Azules</h3>
+                    <input type="file" id="blueShirts" multiple accept="image/*" class="file-input">
+                    <label for="blueShirts" class="upload-label">📁 Seleccionar imágenes de camisas azules</label>
+                    <div id="bluePreview" class="image-preview"></div>
+                    <span id="blueCount" class="count">0 imágenes</span>
+                </div>
+            </div>
+            
+            <div class="training-controls">
+                <h2>⚙️ Configuración del Entrenamiento</h2>
+                <div class="config-grid">
+                    <label>
+                        Épocas:
+                        <input type="number" id="epochs" value="5" min="3" max="20">
+                        <small>Número de pasadas completas por los datos</small>
+                    </label>
+                    <label>
+                        Tamaño del lote:
+                        <input type="number" id="batchSize" value="2" min="1" max="8">
+                        <small>Imágenes procesadas simultáneamente</small>
+                    </label>
+                    <label>
+                        Tasa de aprendizaje:
+                        <input type="number" id="learningRate" value="0.01" step="0.001" min="0.001" max="0.1">
+                        <small>Velocidad de aprendizaje del modelo</small>
+                    </label>
+                </div>
+                
+                <button id="trainButton" class="train-btn" disabled>
+                    🚀 Entrenar Modelo
+                </button>
+                
+                <div class="training-tips">
+                    <h4>💡 Consejos para mejores resultados:</h4>
+                    <ul>
+                        <li>Usa imágenes claras y bien iluminadas</li>
+                        <li>Incluye diferentes ángulos y posiciones</li>
+                        <li>Asegúrate de que las camisas sean el objeto principal</li>
+                        <li>Evita fondos muy complejos</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="progress-section" id="progressSection" style="display: none;">
+                <h2>📊 Progreso del Entrenamiento</h2>
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div id="progressFill" class="progress-fill"></div>
+                    </div>
+                    <div id="progressText" class="progress-text">Preparando...</div>
+                </div>
+                <div id="metricsDisplay" class="metrics-container"></div>
+                
+                <div class="training-info">
+                    <p>🔄 El entrenamiento puede tomar varios minutos dependiendo de la cantidad de imágenes.</p>
+                    <p>💾 El modelo se guardará automáticamente una vez completado.</p>
+                </div>
+            </div>
+            
+            <div class="model-section" id="modelSection" style="display: none;">
+                <h2>🎉 Modelo Entrenado Exitosamente</h2>
+                <div class="model-actions">
+                    <button id="downloadModel" class="download-btn">
+                        📥 Descargar Modelo
+                    </button>
+                    <button id="testModel" class="test-btn">
+                        🧪 Probar Modelo
+                    </button>
+                    <button id="trainNewModel" class="train-again-btn">
+                        🔄 Entrenar Nuevo Modelo
+                    </button>
+                </div>
+                
+                <div class="model-info">
+                    <p>✅ Tu modelo ha sido entrenado y guardado automáticamente.</p>
+                    <p>🎯 Ahora puedes ir al clasificador para probar la precisión con nuevas imágenes.</p>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>Powered by TensorFlow.js • Machine Learning en el navegador</p>
+        </footer>
+    </div>
+
+    <!-- Script principal -->
+    <script type="module" src="src/js/train-app.js"></script>
+</body>
+</html>

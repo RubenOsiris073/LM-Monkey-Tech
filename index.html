@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clasificador de Camisas - TensorFlow.js</title>
+    <link rel="stylesheet" href="src/css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎽 Clasificador de Camisas</h1>
+            <p>Reconoce camisas rojas, grises y azules con tu modelo personalizado</p>
+            <div class="nav-buttons">
+                <a href="public/train.html" class="nav-btn">🏋️ Entrenar Modelo</a>
+                <button id="loadModelBtn" class="nav-btn">📁 Cargar Modelo</button>
+            </div>
+        </header>
+
+        <main>
+            <!-- Selección de modelo -->
+            <div class="model-selection">
+                <h3>🤖 Seleccionar Modelo</h3>
+                <div class="model-options">
+                    <label class="model-option">
+                        <input type="radio" name="modelType" value="custom" checked>
+                        <span>Mi modelo personalizado</span>
+                    </label>
+                    <label class="model-option">
+                        <input type="radio" name="modelType" value="mobilenet">
+                        <span>MobileNet (general)</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Área de carga de imagen -->
+            <div class="upload-section">
+                <div id="dropZone" class="drop-zone">
+                    <div class="drop-content">
+                        <div class="upload-icon">📷</div>
+                        <h3>Arrastra una imagen de camisa aquí</h3>
+                        <p>o</p>
+                        <input type="file" id="imageInput" accept="image/*" class="file-input">
+                        <label for="imageInput" class="upload-button">Seleccionar Imagen</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estado del modelo -->
+            <div id="modelStatus" class="status">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <span>Preparando clasificador...</span>
+                </div>
+            </div>
+
+            <!-- Vista previa de la imagen -->
+            <div id="imagePreview" class="image-preview" style="display: none;">
+                <h3>Imagen seleccionada:</h3>
+                <img id="selectedImage" alt="Imagen seleccionada">
+                <button id="analyzeButton" class="analyze-button">🔍 Clasificar Camisa</button>
+            </div>
+
+            <!-- Resultados del análisis -->
+            <div id="results" class="results" style="display: none;">
+                <h3>🎯 Resultados de la Clasificación:</h3>
+                <div id="predictions" class="predictions"></div>
+                <div class="confidence-info">
+                    <small>💡 Tip: Para mejores resultados, usa imágenes claras con buena iluminación</small>
+                </div>
+            </div>
+
+            <div class="info-section">
+                <h3>📋 Instrucciones:</h3>
+                <div class="instructions-grid">
+                    <div class="instruction-card">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4>Entrenar tu modelo</h4>
+                            <p>Ve a "Entrenar Modelo" y carga 3+ imágenes por cada color de camisa</p>
+                            <a href="public/train.html" class="step-link">🏋️ Ir a entrenar</a>
+                        </div>
+                    </div>
+                    <div class="instruction-card">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4>Seleccionar modelo</h4>
+                            <p>Elige "Mi modelo personalizado" una vez que hayas entrenado</p>
+                        </div>
+                    </div>
+                    <div class="instruction-card">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h4>Clasificar imágenes</h4>
+                            <p>Carga una imagen de camisa y obtén la predicción</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>Powered by TensorFlow.js</p>
+        </footer>
+    </div>
+
+    <!-- Input oculto para cargar modelo -->
+    <input type="file" id="modelLoader" style="display: none;" webkitdirectory>
+
+    <script type="module" src="src/js/classifier-app.js"></script>
+</body>
+</html>

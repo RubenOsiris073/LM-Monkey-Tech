@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrenar Modelo - Clasificador de Camisas</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>🎽 Entrenar Modelo de Camisas</h1>
+        <p>Entrena un modelo personalizado para clasificar camisas rojas, grises y azules</p>
+        
+        <div class="training-section">
+            <h2>📁 Cargar Imágenes de Entrenamiento</h2>
+            
+            <div class="category-section">
+                <h3>🔴 Camisas Rojas</h3>
+                <input type="file" id="redShirts" multiple accept="image/*" class="file-input">
+                <label for="redShirts" class="upload-label">📁 Seleccionar imágenes de camisas rojas</label>
+                <div id="redPreview" class="image-preview"></div>
+                <span id="redCount" class="count">0 imágenes</span>
+            </div>
+            
+            <div class="category-section">
+                <h3>⚫ Camisas Grises</h3>
+                <input type="file" id="grayShirts" multiple accept="image/*" class="file-input">
+                <label for="grayShirts" class="upload-label">📁 Seleccionar imágenes de camisas grises</label>
+                <div id="grayPreview" class="image-preview"></div>
+                <span id="grayCount" class="count">0 imágenes</span>
+            </div>
+            
+            <div class="category-section">
+                <h3>🔵 Camisas Azules</h3>
+                <input type="file" id="blueShirts" multiple accept="image/*" class="file-input">
+                <label for="blueShirts" class="upload-label">📁 Seleccionar imágenes de camisas azules</label>
+                <div id="bluePreview" class="image-preview"></div>
+                <span id="blueCount" class="count">0 imágenes</span>
+            </div>
+        </div>
+        
+        <div class="training-controls">
+            <h2>⚙️ Configuración del Entrenamiento</h2>
+            <div class="config-grid">
+                <label>
+                    Épocas:
+                    <input type="number" id="epochs" value="50" min="10" max="200">
+                </label>
+                <label>
+                    Tamaño del lote:
+                    <input type="number" id="batchSize" value="16" min="8" max="64">
+                </label>
+                <label>
+                    Tasa de aprendizaje:
+                    <input type="number" id="learningRate" value="0.001" step="0.0001" min="0.0001" max="0.01">
+                </label>
+            </div>
+            
+            <button id="trainButton" class="train-btn" disabled>
+                🚀 Entrenar Modelo
+            </button>
+        </div>
+        
+        <div class="progress-section" id="progressSection" style="display: none;">
+            <h2>📊 Progreso del Entrenamiento</h2>
+            <div class="progress-bar">
+                <div id="progressFill" class="progress-fill"></div>
+            </div>
+            <div id="progressText">Preparando...</div>
+            <div id="metricsDisplay"></div>
+        </div>
+        
+        <div class="model-section" id="modelSection" style="display: none;">
+            <h2>💾 Modelo Entrenado</h2>
+            <button id="downloadModel" class="download-btn">
+                📥 Descargar Modelo
+            </button>
+            <button id="testModel" class="test-btn">
+                🧪 Probar Modelo
+            </button>
+        </div>
+    </div>
+    
+    <script src="train.js"></script>
+</body>
+</html>
