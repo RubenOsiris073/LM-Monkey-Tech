@@ -1,0 +1,1 @@
+export { TrainingController } from './trainingController';
