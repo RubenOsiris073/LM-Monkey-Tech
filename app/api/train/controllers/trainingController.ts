@@ -56,6 +56,7 @@ export class TrainingController {
         modelId: trainingResult.modelId,
         metrics: trainingResult.metrics,
         history: trainingResult.history,
+        modelData: trainingResult.modelData,
         message: 'Modelo entrenado exitosamente'
       });
 
