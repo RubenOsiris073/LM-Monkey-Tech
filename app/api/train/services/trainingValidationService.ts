@@ -1,4 +1,5 @@
 import { TrainingData } from '../types';
+import { ML_CONFIG } from '@/src/config/ml-config';
 
 export class TrainingValidationService {
   
@@ -48,11 +49,11 @@ export class TrainingValidationService {
       };
     }
 
-    // Check for minimum images per class
-    if (classData.images.length < 3) {
+    // Check for minimum images per class using shared configuration
+    if (classData.images.length < ML_CONFIG.MODEL.MIN_IMAGES_PER_CLASS) {
       return {
         isValid: false,
-        error: `La clase "${classData.name}" necesita al menos 3 imágenes para un entrenamiento efectivo`
+        error: `La clase "${classData.name}" necesita al menos ${ML_CONFIG.MODEL.MIN_IMAGES_PER_CLASS} imágenes para un entrenamiento efectivo`
       };
     }
 
