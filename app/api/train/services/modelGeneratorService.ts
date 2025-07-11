@@ -55,37 +55,13 @@ export class ModelGeneratorService {
         config: {
           name: "sequential",
           layers: [
-            // Input layer with Conv2D
+            // Convolutional blocks
             {
               class_name: "Conv2D",
               config: {
                 name: "conv2d_input",
                 trainable: true,
                 batch_input_shape: [null, ...inputShape],
-                filters: 32,
-                kernel_size: [3, 3],
-                strides: [1, 1],
-                padding: "same",
-                activation: "relu",
-                use_bias: true
-              }
-            },
-            {
-              class_name: "MaxPooling2D",
-              config: {
-                name: "max_pooling2d_1",
-                trainable: true,
-                pool_size: [2, 2],
-                strides: [2, 2],
-                padding: "valid"
-              }
-            },
-            // Second convolutional block
-            {
-              class_name: "Conv2D",
-              config: {
-                name: "conv2d_2",
-                trainable: true,
                 filters: 64,
                 kernel_size: [3, 3],
                 strides: [1, 1],
@@ -94,58 +70,20 @@ export class ModelGeneratorService {
                 use_bias: true
               }
             },
-            {
-              class_name: "MaxPooling2D",
-              config: {
-                name: "max_pooling2d_2",
-                trainable: true,
-                pool_size: [2, 2],
-                strides: [2, 2],
-                padding: "valid"
-              }
-            },
-            // Third convolutional block
-            {
-              class_name: "Conv2D",
-              config: {
-                name: "conv2d_3",
-                trainable: true,
-                filters: 128,
-                kernel_size: [3, 3],
-                strides: [1, 1],
-                padding: "same",
-                activation: "relu",
-                use_bias: true
-              }
-            },
-            {
-              class_name: "GlobalAveragePooling2D",
-              config: {
-                name: "global_average_pooling2d",
-                trainable: true,
-                data_format: "channels_last"
-              }
-            },
-            // Regularization
-            {
-              class_name: "Dropout",
-              config: {
-                name: "dropout",
-                trainable: true,
-                rate: 0.5
-              }
-            },
-            // Output layer
-            {
-              class_name: "Dense",
-              config: {
-                name: "predictions",
-                trainable: true,
-                units: numClasses,
-                activation: "softmax",
-                use_bias: true
-              }
-            }
+            { class_name: "Conv2D", config: { name: "conv2d_2", trainable: true, filters: 128, kernel_size: [3,3], strides: [1,1], padding: "same", activation: "relu", use_bias: true } },
+            { class_name: "Conv2D", config: { name: "conv2d_3", trainable: true, filters: 256, kernel_size: [3,3], strides: [1,1], padding: "same", activation: "relu", use_bias: true } },
+            { class_name: "Conv2D", config: { name: "conv2d_4", trainable: true, filters: 256, kernel_size: [3,3], strides: [1,1], padding: "same", activation: "relu", use_bias: true } },
+            { class_name: "MaxPooling2D", config: { name: "max_pooling2d_1", trainable: true, pool_size: [2,2], strides: [2,2], padding: "valid" } },
+            { class_name: "Conv2D", config: { name: "conv2d_5", trainable: true, filters: 512, kernel_size: [3,3], strides: [1,1], padding: "same", activation: "relu", use_bias: true } },
+            { class_name: "Conv2D", config: { name: "conv2d_6", trainable: true, filters: 512, kernel_size: [3,3], strides: [1,1], padding: "same", activation: "relu", use_bias: true } },
+            { class_name: "MaxPooling2D", config: { name: "max_pooling2d_2", trainable: true, pool_size: [2,2], strides: [2,2], padding: "valid" } },
+            { class_name: "Conv2D", config: { name: "conv2d_7", trainable: true, filters: 512, kernel_size: [3,3], strides: [1,1], padding: "same", activation: "relu", use_bias: true } },
+            { class_name: "Conv2D", config: { name: "conv2d_8", trainable: true, filters: 512, kernel_size: [3,3], strides: [1,1], padding: "same", activation: "relu", use_bias: true } },
+            { class_name: "Conv2D", config: { name: "conv2d_9", trainable: true, filters: 1024, kernel_size: [3,3], strides: [1,1], padding: "same", activation: "relu", use_bias: true } },
+            { class_name: "GlobalAveragePooling2D", config: { name: "gap", trainable: true, data_format: "channels_last" } },
+            { class_name: "Dense", config: { name: "dense_1", trainable: true, units: 2048, activation: "relu", use_bias: true } },
+            { class_name: "Dropout", config: { name: "dropout", trainable: true, rate: 0.3 } },
+            { class_name: "Dense", config: { name: "predictions", trainable: true, units: numClasses, activation: "softmax", use_bias: true } }
           ]
         }
       },
@@ -159,13 +97,28 @@ export class ModelGeneratorService {
    * Generates model weights
    */
   private static generateWeights(numClasses: number): ArrayBuffer {
-    // Calculate weight sizes for the simplified architecture
-    const conv1Weights = 3 * 3 * 3 * 32 + 32; // kernel + bias
-    const conv2Weights = 3 * 3 * 32 * 64 + 64;
-    const conv3Weights = 3 * 3 * 64 * 128 + 128;
-    const denseWeights = 128 * numClasses + numClasses;
-    
-    const totalWeights = conv1Weights + conv2Weights + conv3Weights + denseWeights;
+    // Calculate weight sizes for the deeper architecture
+    const convLayers = [
+      { inC: 3, outC: 64 },
+      { inC: 64, outC: 128 },
+      { inC: 128, outC: 256 },
+      { inC: 256, outC: 256 },
+      { inC: 256, outC: 512 },
+      { inC: 512, outC: 512 },
+      { inC: 512, outC: 512 },
+      { inC: 512, outC: 512 },
+      { inC: 512, outC: 1024 }
+    ];
+
+    const convWeights = convLayers.reduce(
+      (sum, l) => sum + 3 * 3 * l.inC * l.outC + l.outC,
+      0
+    );
+
+    const dense1Weights = 1024 * 2048 + 2048;
+    const dense2Weights = 2048 * numClasses + numClasses;
+
+    const totalWeights = convWeights + dense1Weights + dense2Weights;
     
     console.log(`Generando ${totalWeights} parámetros para ${numClasses} clases`);
     
@@ -191,13 +144,27 @@ export class ModelGeneratorService {
       {
         paths: ["model.weights.bin"],
         weights: [
-          { name: "conv2d_input/kernel", shape: [3, 3, 3, 32], dtype: "float32" },
-          { name: "conv2d_input/bias", shape: [32], dtype: "float32" },
-          { name: "conv2d_2/kernel", shape: [3, 3, 32, 64], dtype: "float32" },
-          { name: "conv2d_2/bias", shape: [64], dtype: "float32" },
-          { name: "conv2d_3/kernel", shape: [3, 3, 64, 128], dtype: "float32" },
-          { name: "conv2d_3/bias", shape: [128], dtype: "float32" },
-          { name: "predictions/kernel", shape: [128, numClasses], dtype: "float32" },
+          { name: "conv2d_input/kernel", shape: [3, 3, 3, 64], dtype: "float32" },
+          { name: "conv2d_input/bias", shape: [64], dtype: "float32" },
+          { name: "conv2d_2/kernel", shape: [3, 3, 64, 128], dtype: "float32" },
+          { name: "conv2d_2/bias", shape: [128], dtype: "float32" },
+          { name: "conv2d_3/kernel", shape: [3, 3, 128, 256], dtype: "float32" },
+          { name: "conv2d_3/bias", shape: [256], dtype: "float32" },
+          { name: "conv2d_4/kernel", shape: [3, 3, 256, 256], dtype: "float32" },
+          { name: "conv2d_4/bias", shape: [256], dtype: "float32" },
+          { name: "conv2d_5/kernel", shape: [3, 3, 256, 512], dtype: "float32" },
+          { name: "conv2d_5/bias", shape: [512], dtype: "float32" },
+          { name: "conv2d_6/kernel", shape: [3, 3, 512, 512], dtype: "float32" },
+          { name: "conv2d_6/bias", shape: [512], dtype: "float32" },
+          { name: "conv2d_7/kernel", shape: [3, 3, 512, 512], dtype: "float32" },
+          { name: "conv2d_7/bias", shape: [512], dtype: "float32" },
+          { name: "conv2d_8/kernel", shape: [3, 3, 512, 512], dtype: "float32" },
+          { name: "conv2d_8/bias", shape: [512], dtype: "float32" },
+          { name: "conv2d_9/kernel", shape: [3, 3, 512, 1024], dtype: "float32" },
+          { name: "conv2d_9/bias", shape: [1024], dtype: "float32" },
+          { name: "dense_1/kernel", shape: [1024, 2048], dtype: "float32" },
+          { name: "dense_1/bias", shape: [2048], dtype: "float32" },
+          { name: "predictions/kernel", shape: [2048, numClasses], dtype: "float32" },
           { name: "predictions/bias", shape: [numClasses], dtype: "float32" }
         ]
       }

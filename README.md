@@ -39,6 +39,6 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 To achieve better accuracy when training new models:
 
-- Provide **at least 20 images per class**. Balanced classes improve results.
-- The default training parameters run **30 epochs** with a **batch size of 32** and a **learning rate of 0.0005**.
-- With this setup and enough data you can expect accuracies around **80%** or higher.
+- Provide **at least 20 images per class**. Balanced classes improve results, but more images (50+ per class) yield much higher precision.
+- The default training parameters now run **60 epochs** with a **batch size of 16** and a **learning rate of 0.0003**.
+- This heavier configuration generates model files around **60 MB** and produces noticeably better accuracy when you supply enough data.

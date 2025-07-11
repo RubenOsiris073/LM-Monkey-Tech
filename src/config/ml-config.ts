@@ -14,9 +14,9 @@ export const ML_CONFIG = {
 
   // Configuración de entrenamiento optimizada para productos
   TRAINING: {
-    DEFAULT_EPOCHS: 30,
-    DEFAULT_BATCH_SIZE: 32,
-    DEFAULT_LEARNING_RATE: 0.0005,
+    DEFAULT_EPOCHS: 60,
+    DEFAULT_BATCH_SIZE: 16,
+    DEFAULT_LEARNING_RATE: 0.0003,
     VALIDATION_SPLIT: 0.2,
     EARLY_STOPPING_PATIENCE: 7,
     
@@ -24,8 +24,8 @@ export const ML_CONFIG = {
     TRANSFER_LEARNING: {
       BASE_MODEL: 'mobilenet',
       FREEZE_BASE: true,
-      FINE_TUNE_LAYERS: 10,
-      DROPOUT_RATE: 0.5
+      FINE_TUNE_LAYERS: 20,
+      DROPOUT_RATE: 0.3
     }
   },
 
