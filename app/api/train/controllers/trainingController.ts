@@ -56,7 +56,7 @@ export class TrainingController {
         modelId: trainingResult.modelId,
         metrics: trainingResult.metrics,
         history: trainingResult.history,
-        downloadUrl: `/api/models?modelId=${trainingResult.modelId}&download=true`,
+        modelData: trainingResult.modelData,
         message: 'Modelo entrenado exitosamente'
       });
 
