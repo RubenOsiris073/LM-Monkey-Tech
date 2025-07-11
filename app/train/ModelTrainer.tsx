@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import { ML_CONFIG } from '@/src/config/ml-config';
 import { useServerTraining } from '@/src/hooks/useServerTraining';
 import { ImageData, ClassData, TrainingClass } from './types';
+import { TrainingClass as HookTrainingClass } from '@/src/hooks/useServerTraining';
 
 import TrainingHeader from './components/TrainingHeader';
 import ContentTitle from './components/ContentTitle';
@@ -54,7 +55,7 @@ export default function ModelTrainer() {
           file,
           url: URL.createObjectURL(file),
           id: Math.random().toString(36).substr(2, 9),
-          data: URL.createObjectURL(file)
+          data: URL.createObjectURL(file) // Mantener blob URL por ahora, se convierte a base64 al entrenar
         };
         newImages.push(imageData);
       }
@@ -68,6 +69,16 @@ export default function ModelTrainer() {
       )
     );
   }, []);
+
+  // Función auxiliar para convertir archivo a base64
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
+  };
 
   // Eliminar imagen
   const removeImage = (classId: string, imageId: string) => {
@@ -116,12 +127,33 @@ export default function ModelTrainer() {
     }
 
     try {
+      console.log('🔄 Convirtiendo imágenes a base64...');
+      
       // Convertir las clases al formato esperado por el hook
-      const trainingClasses: TrainingClass[] = classes.map(classData => ({
-        id: classData.id,
-        name: classData.name,
-        images: classData.images.map(img => img.data)
-      }));
+      const trainingClasses: HookTrainingClass[] = await Promise.all(
+        classes.map(async (classData) => {
+          // Convertir todas las imágenes de esta clase a base64
+          const base64Images = await Promise.all(
+            classData.images.map(async (img) => {
+              // Si img.data es un blob URL, convertir el archivo a base64
+              if (img.data.startsWith('blob:')) {
+                console.log(`🔄 Convirtiendo imagen ${img.id} de blob a base64...`);
+                return await fileToBase64(img.file);
+              }
+              // Si ya es base64, usar tal como está
+              return img.data;
+            })
+          );
+          
+          return {
+            id: classData.id,
+            name: classData.name,
+            images: base64Images
+          };
+        })
+      );
+      
+      console.log('✅ Todas las imágenes convertidas a base64');
       
       const result = await startTraining(trainingClasses, `grocery-model-${Date.now()}`, 20);
       if (result) {

@@ -13,7 +13,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Grocery ML Classifier",
+  title: "LM",
   description: "Plataforma de machine learning para clasificación de productos de abarrotes",
 };
 

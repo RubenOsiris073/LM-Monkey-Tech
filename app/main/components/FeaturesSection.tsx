@@ -23,7 +23,7 @@ export default function FeaturesSection() {
     {
       icon: <Download className="w-8 h-8" />,
       title: "Exportación Fácil",
-      description: "Descarga tus modelos entrenados en formato TensorFlow.js"
+      description: "Descarga tus modelos entrenados"
     }
   ];
 
@@ -35,7 +35,7 @@ export default function FeaturesSection() {
             Potencia tu Negocio con IA
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Herramientas profesionales para crear clasificadores de productos 
+            Herramientas profesionales para crear Modelos de Machine Learning de productos 
             sin conocimientos técnicos previos.
           </p>
         </div>
