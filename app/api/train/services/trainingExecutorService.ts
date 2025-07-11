@@ -87,16 +87,16 @@ export class TrainingExecutorService {
     const numClasses = data.classes.length;
     
     // Base epochs on data size and complexity
-    let epochs = 15; // Base epochs
-    
+    let epochs = 40; // Base epochs
+
     // Adjust based on data size
-    if (totalImages < 50) epochs = 10;
-    else if (totalImages > 200) epochs = 25;
-    
+    if (totalImages < 100) epochs = 30;
+    else if (totalImages > 300) epochs = 80;
+
     // Adjust based on complexity
-    if (numClasses > 5) epochs += 5;
-    
-    return Math.min(epochs, 30); // Cap at 30 epochs
+    if (numClasses > 5) epochs += 20;
+
+    return Math.min(epochs, 100); // Cap at 100 epochs
   }
 
   /**
@@ -118,7 +118,7 @@ export class TrainingExecutorService {
     
     // Base accuracy depends on number of classes (more classes = harder to learn)
     const baseAccuracy = 1 / numClasses; // Random guess accuracy
-    const targetAccuracy = Math.min(0.95, 0.85 + (totalImages / 1000)); // Cap based on data quality
+    const targetAccuracy = Math.min(0.995, 0.85 + (totalImages / 500)); // Higher ceiling with more data
     
     // Learning curve simulation
     const learningRate = this.calculateLearningCurve(progress);
@@ -151,7 +151,7 @@ export class TrainingExecutorService {
    */
   private static async simulateEpochDelay(): Promise<void> {
     // Simulate realistic training time per epoch (100-500ms)
-    const delay = 100 + Math.random() * 400;
+    const delay = 200 + Math.random() * 600;
     await new Promise(resolve => setTimeout(resolve, delay));
   }
 
@@ -170,7 +170,7 @@ export class TrainingExecutorService {
   } {
     // This would be connected to actual training state in a real implementation
     const progress = Math.min(100, Math.floor(Math.random() * 100));
-    const totalEpochs = 20;
+    const totalEpochs = 60;
     const currentEpoch = Math.floor((progress / 100) * totalEpochs);
     
     return {
