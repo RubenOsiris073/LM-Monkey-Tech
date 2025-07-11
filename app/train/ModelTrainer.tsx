@@ -155,7 +155,11 @@ export default function ModelTrainer() {
       
       console.log('✅ Todas las imágenes convertidas a base64');
       
-      const result = await startTraining(trainingClasses, `grocery-model-${Date.now()}`, 20);
+      const result = await startTraining(
+        trainingClasses,
+        `grocery-model-${Date.now()}`,
+        ML_CONFIG.TRAINING.DEFAULT_EPOCHS
+      );
       if (result) {
         setTrainedModel(result);
         alert('¡Entrenamiento completado exitosamente!');

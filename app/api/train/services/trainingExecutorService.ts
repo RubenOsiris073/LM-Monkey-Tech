@@ -87,16 +87,16 @@ export class TrainingExecutorService {
     const numClasses = data.classes.length;
     
     // Base epochs on data size and complexity
-    let epochs = 15; // Base epochs
-    
+    let epochs = 20; // Base epochs
+
     // Adjust based on data size
-    if (totalImages < 50) epochs = 10;
-    else if (totalImages > 200) epochs = 25;
+    if (totalImages < 100) epochs = 15;
+    else if (totalImages > 300) epochs = 30;
     
     // Adjust based on complexity
     if (numClasses > 5) epochs += 5;
     
-    return Math.min(epochs, 30); // Cap at 30 epochs
+    return Math.min(epochs, 40); // Cap at 40 epochs
   }
 
   /**
@@ -118,7 +118,7 @@ export class TrainingExecutorService {
     
     // Base accuracy depends on number of classes (more classes = harder to learn)
     const baseAccuracy = 1 / numClasses; // Random guess accuracy
-    const targetAccuracy = Math.min(0.95, 0.85 + (totalImages / 1000)); // Cap based on data quality
+    const targetAccuracy = Math.min(0.97, 0.80 + (totalImages / 800)); // Higher ceiling with more data
     
     // Learning curve simulation
     const learningRate = this.calculateLearningCurve(progress);

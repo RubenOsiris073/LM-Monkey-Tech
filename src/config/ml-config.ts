@@ -8,17 +8,17 @@ export const ML_CONFIG = {
     IMAGE_SIZE: 224, // Aumentado para mejor precisión en productos
     INPUT_SHAPE: [224, 224, 3],
     CLASSES: [], // Se llenará dinámicamente por el usuario
-    MIN_IMAGES_PER_CLASS: 10, // Mínimo de imágenes por producto
+    MIN_IMAGES_PER_CLASS: 20, // Mayor cantidad para mejor precisión
     MAX_CLASSES: 50, // Máximo de categorías de productos
   },
 
   // Configuración de entrenamiento optimizada para productos
   TRAINING: {
-    DEFAULT_EPOCHS: 20,
-    DEFAULT_BATCH_SIZE: 16,
-    DEFAULT_LEARNING_RATE: 0.001,
+    DEFAULT_EPOCHS: 30,
+    DEFAULT_BATCH_SIZE: 32,
+    DEFAULT_LEARNING_RATE: 0.0005,
     VALIDATION_SPLIT: 0.2,
-    EARLY_STOPPING_PATIENCE: 5,
+    EARLY_STOPPING_PATIENCE: 7,
     
     // Configuración para transfer learning con MobileNet
     TRANSFER_LEARNING: {
