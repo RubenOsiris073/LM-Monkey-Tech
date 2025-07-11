@@ -123,7 +123,11 @@ export default function ModelTrainer() {
         images: classData.images.map(img => img.data)
       }));
       
-      const result = await startTraining(trainingClasses, `grocery-model-${Date.now()}`, 20);
+      const result = await startTraining(
+        trainingClasses,
+        `grocery-model-${Date.now()}`,
+        ML_CONFIG.TRAINING.DEFAULT_EPOCHS
+      );
       if (result) {
         setTrainedModel(result);
         alert('¡Entrenamiento completado exitosamente!');
