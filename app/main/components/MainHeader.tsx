@@ -13,8 +13,8 @@ export default function MainHeader() {
               <ShoppingCart className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">Grocery ML</h1>
-              <p className="text-sm text-gray-600">Clasificador Inteligente</p>
+              <h1 className="text-xl font-bold text-gray-900">LM</h1>
+              <p className="text-sm text-gray-600">Por Monkey Technologies</p>
             </div>
           </div>
           

@@ -1,7 +1,6 @@
 'use client';
 
 import ModelHeader from './components/ModelHeader';
-import ContentTitle from './components/ContentTitle';
 import ModelStats from './components/ModelStats';
 import StorageInfo from './components/StorageInfo';
 import LoadingSpinner from './components/LoadingSpinner';
@@ -26,8 +25,6 @@ export default function ModelManagementDashboardPage() {
           modelCount={savedModels.length}
           onRefresh={loadSavedModels}
         />
-
-        <ContentTitle modelCount={savedModels.length} />
 
         {!isLoading && <ModelStats models={savedModels} />}
 

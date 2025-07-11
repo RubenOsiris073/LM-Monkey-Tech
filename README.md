@@ -42,4 +42,12 @@ To achieve better accuracy when training new models:
 - Provide **at least 20 images per class**. Balanced classes improve results, but more images (50+ per class) yield much higher precision.
 - The default training parameters now run **60 epochs** with a **batch size of 16** and a **learning rate of 0.0003**.
 - This heavier configuration generates model files around **60 MB** and produces noticeably better accuracy when you supply enough data.
+
+## Training Tips
+
+To achieve better accuracy when training new models:
+
+- Provide **at least 20 images per class**. Balanced classes improve results, but more images (50+ per class) yield much higher precision.
+- The default training parameters now run **60 epochs** with a **batch size of 16** and a **learning rate of 0.0003**.
+- This heavier configuration generates model files around **60 MB** and produces noticeably better accuracy when you supply enough data.
 After training the model is saved server-side. Use the `downloadUrl` returned by the API to fetch a ZIP file with the trained model.
