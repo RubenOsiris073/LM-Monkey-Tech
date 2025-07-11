@@ -1,5 +1,4 @@
 import { useState, useCallback } from 'react';
-import JSZip from 'jszip';
 
 export interface TrainingClass {
   id: string;
@@ -19,12 +18,7 @@ export interface TrainingMetrics {
 export interface TrainedModel {
   modelId: string;
   modelName: string;
-  files: {
-    'model.json': string;
-    'model.weights.bin': ArrayBuffer;
-    'metadata.json': string;
-    'README.txt': string;
-  };
+  downloadUrl: string;
   finalMetrics?: TrainingMetrics;
 }
 
@@ -74,6 +68,11 @@ export const useServerTraining = () => {
       }
 
       const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || 'Respuesta de entrenamiento inválida');
+      }
+
       
       // Actualizar métricas de entrenamiento
       setTrainingMetrics({
@@ -87,7 +86,7 @@ export const useServerTraining = () => {
       const model: TrainedModel = {
         modelId: result.modelId,
         modelName: result.modelId,
-        files: result.modelData.files,
+        downloadUrl: result.downloadUrl,
         finalMetrics: {
           epoch: epochs,
           accuracy: result.metrics?.finalAccuracy || 0.85,
@@ -97,9 +96,6 @@ export const useServerTraining = () => {
       };
 
       setTrainedModel(model);
-      
-      // Guardar automáticamente en el servidor
-      await saveModelToServer(model);
       
       console.log('✅ Entrenamiento completado exitosamente');
       
@@ -114,66 +110,14 @@ export const useServerTraining = () => {
   }, []);
 
   // Guardar modelo en el servidor
-  const saveModelToServer = useCallback(async (model: TrainedModel) => {
-    try {
-      const response = await fetch('/api/models', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          modelId: model.modelId,
-          modelName: model.modelName,
-          files: {
-            'model.json': model.files['model.json'],
-            'model.weights.bin': Array.from(new Uint8Array(model.files['model.weights.bin'])),
-            'metadata.json': model.files['metadata.json'],
-            'README.txt': model.files['README.txt']
-          },
-          metadata: JSON.parse(model.files['metadata.json'])
-        }),
-      });
-
-      if (response.ok) {
-        console.log(`✅ Modelo ${model.modelId} guardado automáticamente en el servidor`);
-      } else {
-        console.error('❌ Error guardando modelo automáticamente:', await response.text());
-      }
-    } catch (error) {
-      console.error('❌ Error en guardado automático:', error);
-    }
-  }, []);
-
   const downloadModel = useCallback(async (model: TrainedModel) => {
     try {
-      const zip = new JSZip();
-      
-      // Agregar archivos al ZIP
-      zip.file('model.json', model.files['model.json']);
-      zip.file('metadata.json', model.files['metadata.json']);
-      zip.file('README.txt', model.files['README.txt']);
-      
-      // Convertir los pesos a ArrayBuffer si es necesario
-      let weightsBuffer: ArrayBuffer;
-      if (model.files['model.weights.bin'] instanceof ArrayBuffer) {
-        weightsBuffer = model.files['model.weights.bin'];
-      } else {
-        // Si los pesos están como array de números, convertir a ArrayBuffer
-        const weightsArray = model.files['model.weights.bin'] as any;
-        if (Array.isArray(weightsArray)) {
-          weightsBuffer = new Float32Array(weightsArray).buffer;
-        } else {
-          throw new Error('Formato de pesos no válido');
-        }
+      const response = await fetch(model.downloadUrl);
+      if (!response.ok) {
+        throw new Error('Error al descargar el modelo');
       }
-      
-      zip.file('model.weights.bin', weightsBuffer);
-      
-      // Generar ZIP
-      const zipBlob = await zip.generateAsync({ type: 'blob' });
-      
-      // Descargar archivo
-      const url = URL.createObjectURL(zipBlob);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.download = `${model.modelName}.zip`;
@@ -181,12 +125,11 @@ export const useServerTraining = () => {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      
-      console.log(`Modelo ${model.modelName} descargado como archivo ZIP completo`);
-      
+
+      console.log(`Modelo ${model.modelName} descargado correctamente desde el servidor`);
     } catch (error) {
       console.error('Error al descargar el modelo:', error);
-      throw new Error('Error al crear el archivo ZIP del modelo');
+      throw error;
     }
   }, []);
 
