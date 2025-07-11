@@ -126,6 +126,8 @@ export default function ModelTrainer() {
       return;
     }
 
+    const trainingClasses: TrainingClass[] = [];
+
     try {
       console.log('🔄 Convirtiendo imágenes a base64...');
       
