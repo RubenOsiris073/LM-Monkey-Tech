@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Grocery ML Classifier",
+  title: "LM",
   description: "Plataforma de machine learning para clasificación de productos de abarrotes",
 };
 

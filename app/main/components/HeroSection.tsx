@@ -25,7 +25,7 @@ export default function HeroSection() {
             
             <p className="text-xl md:text-2xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed">
               Crea modelos de machine learning personalizados para identificar y categorizar 
-              productos de abarrotes con precisión profesional.
+              productos con precisión profesional.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
