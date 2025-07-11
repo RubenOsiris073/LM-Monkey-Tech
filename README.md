@@ -34,3 +34,11 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Training Tips
+
+To achieve better accuracy when training new models:
+
+- Provide **at least 20 images per class**. Balanced classes improve results, but more images (50+ per class) yield much higher precision.
+- The default training parameters now run **60 epochs** with a **batch size of 16** and a **learning rate of 0.0003**.
+- This heavier configuration generates model files around **60 MB** and produces noticeably better accuracy when you supply enough data.
