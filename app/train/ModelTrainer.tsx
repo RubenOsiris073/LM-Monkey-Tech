@@ -115,15 +115,39 @@ export default function ModelTrainer() {
       return;
     }
 
+    const trainingClasses: TrainingClass[] = [];
+
     try {
-      // Convertir las clases al formato esperado por el hook
-      const trainingClasses: TrainingClass[] = classes.map(classData => ({
-        id: classData.id,
-        name: classData.name,
-        images: classData.images.map(img => img.data)
-      }));
+      // Convertir las imágenes a base64 si es necesario
+      const toBase64 = (file: File) => {
+        return new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = () => reject(new Error('Error leyendo archivo'));
+          reader.readAsDataURL(file);
+        });
+      };
+
+      for (const classData of classes) {
+        const images: string[] = [];
+        for (const img of classData.images) {
+          if (img.data.startsWith('data:image')) {
+            images.push(img.data);
+          } else {
+            console.log(`🔄 Convirtiendo imagen ${img.id} de blob a base64...`);
+            images.push(await toBase64(img.file));
+          }
+        }
+        trainingClasses.push({ id: classData.id, name: classData.name, images });
+      }
+
+      console.log('✅ Todas las imágenes convertidas a base64');
       
-      const result = await startTraining(trainingClasses, `grocery-model-${Date.now()}`, 20);
+      const result = await startTraining(
+        trainingClasses,
+        `grocery-model-${Date.now()}`,
+        ML_CONFIG.TRAINING.DEFAULT_EPOCHS
+      );
       if (result) {
         setTrainedModel(result);
         alert('¡Entrenamiento completado exitosamente!');
