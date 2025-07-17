@@ -126,36 +126,16 @@ export default function ModelTrainer() {
       return;
     }
 
+    const trainingClasses: TrainingClass[] = [];
+
     try {
       console.log('🔄 Convirtiendo imágenes a base64...');
       
-      // Convertir las clases al formato esperado por el hook
-      const trainingClasses: HookTrainingClass[] = await Promise.all(
-        classes.map(async (classData) => {
-          // Convertir todas las imágenes de esta clase a base64
-          const base64Images = await Promise.all(
-            classData.images.map(async (img) => {
-              // Si img.data es un blob URL, convertir el archivo a base64
-              if (img.data.startsWith('blob:')) {
-                console.log(`🔄 Convirtiendo imagen ${img.id} de blob a base64...`);
-                return await fileToBase64(img.file);
-              }
-              // Si ya es base64, usar tal como está
-              return img.data;
-            })
-          );
-          
-          return {
-            id: classData.id,
-            name: classData.name,
-            images: base64Images
-          };
-        })
+      const result = await startTraining(
+        trainingClasses,
+        `grocery-model-${Date.now()}`,
+        ML_CONFIG.TRAINING.DEFAULT_EPOCHS
       );
-      
-      console.log('✅ Todas las imágenes convertidas a base64');
-      
-      const result = await startTraining(trainingClasses, `grocery-model-${Date.now()}`, 20);
       if (result) {
         setTrainedModel(result);
         alert('¡Entrenamiento completado exitosamente!');

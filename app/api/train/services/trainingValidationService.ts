@@ -1,4 +1,5 @@
 import { TrainingData } from '../types';
+import { ML_CONFIG } from '@/src/config/ml-config';
 
 export class TrainingValidationService {
   
