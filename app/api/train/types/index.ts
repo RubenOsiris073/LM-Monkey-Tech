@@ -1,4 +1,5 @@
 export interface TrainingData {
+  sessionId?: string;
   classes: {
     name: string;
     images: string[]; // Base64 encoded images

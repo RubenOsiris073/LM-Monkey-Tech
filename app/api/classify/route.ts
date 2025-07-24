@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { readFile } from 'fs/promises';
 
 interface Prediction {
   className: string;
@@ -18,26 +19,19 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     
     const image = formData.get('image') as string;
-    const modelJson = formData.get('modelJson') as File;
-    const weightsFile = formData.get('weightsFile') as File;
-    const metadataJson = formData.get('metadataJson') as File;
+    const sessionId = formData.get('sessionId') as string;
+    const modelInfo = JSON.parse(formData.get('modelInfo') as string);
 
-    if (!image) {
+    if (!image || !sessionId || !modelInfo) {
       return NextResponse.json(
-        { error: 'No se proporcionó imagen' },
+        { error: 'Datos incompletos' },
         { status: 400 }
       );
     }
 
-    if (!modelJson || !weightsFile || !metadataJson) {
-      return NextResponse.json(
-        { error: 'Se requieren los 3 archivos del modelo: model.json, weights.bin y metadata.json' },
-        { status: 400 }
-      );
-    }
-
-    // Leer y parsear metadata
-    const metadataText = await metadataJson.text();
+    // Leer metadata de los archivos subidos
+    const metadataPath = modelInfo.metadataUrls[0]; // Por ahora usamos solo el primer chunk
+    const metadataText = await readFile(metadataPath, 'utf-8');
     const metadata: ModelMetadata = JSON.parse(metadataText);
 
     if (!metadata.labels || !Array.isArray(metadata.labels)) {
@@ -47,7 +41,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Simular la clasificación con el modelo personalizado
+    // Realizar la clasificación
+    try {
+      // Por ahora simularemos la clasificación
+      const mockPredictions: Prediction[] = metadata.labels.map(label => ({
+        className: label,
+        confidence: Math.random()
+      }));
+
+      // Ordenar por confianza descendente
+      mockPredictions.sort((a, b) => b.confidence - a.confidence);
+
+      return NextResponse.json({
+        predictions: mockPredictions,
+        modelInfo: {
+          name: metadata.modelName,
+          version: metadata.version,
+          inputShape: metadata.inputShape
+        }
+      });
+    } catch (error) {
+      console.error('Error al realizar la clasificación:', error);
+      return NextResponse.json(
+        { error: 'Error al realizar la clasificación' },
+        { status: 500 }
+      );
+    }
     const predictions = await simulateClassificationWithCustomModel(image, metadata);
     
     return NextResponse.json({

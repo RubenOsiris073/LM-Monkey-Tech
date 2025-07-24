@@ -2,6 +2,8 @@ import { TrainingData, TrainingMetrics, CompleteModel } from '../types';
 import { TrainingValidationService } from './trainingValidationService';
 import { TrainingExecutorService } from './trainingExecutorService';
 import { ModelGeneratorService } from './modelGeneratorService';
+import * as fs from 'fs/promises';
+import * as path from 'path';
 
 export class TrainingService {
   
@@ -21,7 +23,39 @@ export class TrainingService {
     metrics: TrainingMetrics;
     modelData: CompleteModel;
   }> {
-    // Execute training
+    // Si se proporciona sessionId, cargar imágenes desde el sistema de archivos
+    if (data.sessionId) {
+      const sessionDir = path.join(process.cwd(), 'tmp', 'training', data.sessionId);
+      
+      // Cargar imágenes para cada clase
+      data.classes = await Promise.all(
+        data.classes.map(async (cls) => {
+          const classDir = path.join(sessionDir, cls.name);
+          const files = await fs.readdir(classDir);
+          const images = await Promise.all(
+            files.map(async (file: string) => {
+              const filePath = path.join(classDir, file);
+              const buffer = await fs.readFile(filePath);
+              return `data:image/png;base64,${buffer.toString('base64')}`;
+            })
+          );
+          return {
+            ...cls,
+            images
+          };
+        })
+      );
+    }
+
+    console.log('Iniciando entrenamiento con:', {
+      numClasses: data.classes.length,
+      imagesPerClass: data.classes.map(c => ({ 
+        className: c.name, 
+        imageCount: c.images?.length || 0
+      }))
+    });
+
+    // Execute training with batched processing
     const trainingResult = await TrainingExecutorService.executeTraining(data);
     
     // Generate model

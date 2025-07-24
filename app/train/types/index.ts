@@ -19,8 +19,4 @@ export interface TrainingMetrics {
   progress: number;
 }
 
-export interface TrainingClass {
-  id: string;
-  name: string;
-  images: string[];
-}
+

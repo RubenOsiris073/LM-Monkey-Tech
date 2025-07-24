@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { ML_CONFIG } from '@/src/config/ml-config';
+import { uploadFileInChunks } from '@/src/utils/modelSplitter';
 import ClassifyHeader from './layout/ClassifyHeader';
 import ContentTitle from './layout/ContentTitle';
 import ModelLoader from './components/ModelLoader';
@@ -161,6 +162,29 @@ export default function AIProductClassifierPage() {
   };
 
   // Clasificar imagen usando el modelo personalizado cargado
+  const uploadModel = useCallback(async () => {
+    if (!modelFiles.modelJson || !modelFiles.weightsFile || !modelFiles.metadataJson) {
+      throw new Error('Faltan archivos del modelo');
+    }
+
+    const sessionId = Math.random().toString(36).substr(2, 9);
+    const metadata = { sessionId };
+
+    // Subir cada archivo por separado
+    const [modelJsonUrls, weightsUrls, metadataUrls] = await Promise.all([
+      uploadFileInChunks(modelFiles.modelJson, '/api/upload-model', { ...metadata, type: 'model' }),
+      uploadFileInChunks(modelFiles.weightsFile, '/api/upload-model', { ...metadata, type: 'weights' }),
+      uploadFileInChunks(modelFiles.metadataJson, '/api/upload-model', { ...metadata, type: 'metadata' })
+    ]);
+
+    return {
+      sessionId,
+      modelJsonUrls,
+      weightsUrls,
+      metadataUrls
+    };
+  }, [modelFiles]);
+
   const classifyImage = async () => {
     if (!selectedImage) {
       alert('Selecciona una imagen primero');
@@ -175,12 +199,15 @@ export default function AIProductClassifierPage() {
     setIsClassifying(true);
     
     try {
-      // Crear FormData para enviar los archivos del modelo y la imagen
+      // Primero subir los archivos del modelo
+      console.log('Subiendo archivos del modelo...');
+      const uploadedFiles = await uploadModel();
+
+      // Crear FormData con referencias a los archivos subidos
       const formData = new FormData();
       formData.append('image', selectedImage);
-      formData.append('modelJson', modelFiles.modelJson!);
-      formData.append('weightsFile', modelFiles.weightsFile!);
-      formData.append('metadataJson', modelFiles.metadataJson!);
+      formData.append('sessionId', uploadedFiles.sessionId);
+      formData.append('modelInfo', JSON.stringify(uploadedFiles));
 
       // Enviar al servidor para clasificación
       const response = await fetch('/api/classify', {
@@ -188,13 +215,22 @@ export default function AIProductClassifierPage() {
         body: formData,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error en la clasificación');
-      }
+      let errorData;
+      let responseText;
+      
+      try {
+        responseText = await response.text();
+        const result = JSON.parse(responseText);
+        
+        if (!response.ok) {
+          throw new Error(result.error || 'Error en la clasificación');
+        }
 
-      const result = await response.json();
-      setPredictions(result.predictions.slice(0, ML_CONFIG.METRICS.TOP_K_PREDICTIONS));
+        setPredictions(result.predictions.slice(0, ML_CONFIG.METRICS.TOP_K_PREDICTIONS));
+      } catch (parseError) {
+        console.error('Error al procesar la respuesta:', responseText);
+        throw new Error('Error al procesar la respuesta del servidor');
+      }
       
     } catch (error) {
       console.error('Error durante la clasificación:', error);

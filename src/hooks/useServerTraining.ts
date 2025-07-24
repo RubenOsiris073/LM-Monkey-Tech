@@ -41,20 +41,53 @@ export const useServerTraining = () => {
     try {
       console.log('📡 Enviando datos de entrenamiento al servidor...');
       
+      // Validar que todas las imágenes sean strings base64
+      const validClasses = classes.every(c => 
+        c.images.every(img => typeof img === 'string' && img.startsWith('data:image'))
+      );
+
+      if (!validClasses) {
+        throw new Error('Todas las imágenes deben estar en formato base64');
+      }
+
+      console.log('📤 Preparando datos para enviar al servidor...');
+      const requestData = {
+        classes: classes.map(c => ({
+          name: c.name,
+          images: c.images
+        })),
+        modelName,
+        epochs
+      };
+
       const response = await fetch('/api/train', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          classes: classes.map(c => ({
-            name: c.name,
-            images: c.images
-          })),
-          modelName,
-          epochs,
-        }),
+        body: JSON.stringify(requestData),
       });
+
+      // Si la respuesta no es OK, intentamos leer el texto del error primero
+      if (!response.ok) {
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Error en el entrenamiento');
+        } else {
+          const errorText = await response.text();
+          console.error('Respuesta no-JSON del servidor:', errorText);
+          throw new Error('Error inesperado del servidor');
+        }
+      }
+
+      // Verificar que la respuesta sea JSON antes de parsearla
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const responseText = await response.text();
+        console.error('Respuesta inesperada del servidor:', responseText);
+        throw new Error('El servidor no respondió con JSON válido');
+      }
 
       if (!response.ok) {
         const errorData = await response.json();

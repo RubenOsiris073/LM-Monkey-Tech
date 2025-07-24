@@ -9,12 +9,43 @@ export class TrainingController {
    */
   static async handlePost(request: NextRequest): Promise<NextResponse> {
     try {
-      const body = await request.json();
+      // Verificar el Content-Type
+      const contentType = request.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: 'Content-Type debe ser application/json' 
+          }, 
+          { status: 400 }
+        );
+      }
+
+      let body;
+      try {
+        body = await request.json();
+      } catch (e) {
+        console.error('Error al parsear el body:', e);
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: 'JSON inválido en el body de la petición' 
+          }, 
+          { status: 400 }
+        );
+      }
 
       // Check if it's a progress request
       if (body.action === 'progress') {
         return this.handleProgressRequest(body.trainingId);
       }
+
+      // Log de los datos recibidos
+      console.log('Datos recibidos:', {
+        classCount: body.classes?.length,
+        modelName: body.modelName,
+        epochs: body.epochs
+      });
 
       // Validate training data
       const trainingData: TrainingData = body;

@@ -6,8 +6,14 @@ const nextConfig = {
   // Aumentar límites para el entrenamiento con muchas imágenes
   experimental: {
     serverActions: {
-      bodySizeLimit: '50mb', // Permitir hasta 50MB para las peticiones
+      bodySizeLimit: '100mb', // Permitir hasta 100MB para las peticiones
     },
+  },
+  api: {
+    bodyParser: {
+      sizeLimit: '100mb', // También aumentar el límite para la API routes
+    },
+    responseLimit: '100mb',
   },
   
   webpack: (config, { isServer }) => {

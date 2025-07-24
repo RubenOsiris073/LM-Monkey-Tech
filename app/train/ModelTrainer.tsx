@@ -3,8 +3,10 @@
 import { useState, useCallback } from 'react';
 import { ML_CONFIG } from '@/src/config/ml-config';
 import { useServerTraining } from '@/src/hooks/useServerTraining';
-import { ImageData, ClassData, TrainingClass } from './types';
-import { TrainingClass as HookTrainingClass } from '@/src/hooks/useServerTraining';
+import { useImageUploader } from '@/src/hooks/useImageUploader';
+import { ImageData, ClassData } from './types';
+import { TrainingClass } from '@/src/hooks/useServerTraining';
+import { compressImage } from '@/src/utils/imageCompressor';
 
 import TrainingHeader from './components/TrainingHeader';
 import ContentTitle from './components/ContentTitle';
@@ -119,6 +121,9 @@ export default function ModelTrainer() {
   };
 
   // Iniciar entrenamiento en servidor
+  const { uploadProgress, uploadAllClassImages } = useImageUploader();
+  const sessionId = useCallback(() => Math.random().toString(36).substr(2, 9), [])();
+
   const handleStartTraining = async () => {
     const validation = validateTrainingData();
     if (!validation.valid) {
@@ -126,10 +131,60 @@ export default function ModelTrainer() {
       return;
     }
 
-    const trainingClasses: TrainingClass[] = [];
-
     try {
-      console.log('🔄 Convirtiendo imágenes a base64...');
+      console.log('🔄 Iniciando proceso de subida de imágenes...');
+      
+      // Convertir y comprimir todas las imágenes a base64
+      const classesWithBase64 = await Promise.all(
+        classes.map(async (cls) => {
+          console.log(`Procesando clase "${cls.name}" con ${cls.images.length} imágenes...`);
+          
+          const base64Images = await Promise.all(
+            cls.images.map(async (img, index) => {
+              try {
+                let base64;
+                if (typeof img.data === 'string' && img.data.startsWith('data:image')) {
+                  console.log(`[${cls.name}] Imagen ${index + 1}: usando base64 existente`);
+                  base64 = img.data;
+                } else {
+                  console.log(`[${cls.name}] Imagen ${index + 1}: convirtiendo a base64...`);
+                  base64 = await fileToBase64(img.file);
+                }
+                
+                // Comprimir imagen
+                console.log(`[${cls.name}] Imagen ${index + 1}: comprimiendo...`);
+                const compressed = await compressImage(base64);
+                return compressed;
+              } catch (error) {
+                console.error(`Error procesando imagen ${index + 1} de la clase "${cls.name}":`, error);
+                throw error;
+              }
+            })
+          );
+          
+          return {
+            name: cls.name,
+            images: base64Images
+          };
+        })
+      );
+
+      // Subir imágenes por lotes
+      console.log('📤 Subiendo imágenes al servidor...');
+      const uploadSuccess = await uploadAllClassImages(classesWithBase64, sessionId);
+
+      if (!uploadSuccess) {
+        throw new Error('Error al subir las imágenes');
+      }
+
+      // Preparar datos para entrenamiento
+      const trainingClasses: TrainingClass[] = classesWithBase64.map(cls => ({
+        id: classes.find(c => c.name === cls.name)?.id || Math.random().toString(36).substr(2, 9),
+        name: cls.name,
+        images: cls.images
+      }));
+
+      console.log(`📤 Iniciando entrenamiento con ${trainingClasses.length} clases...`);
       
       const result = await startTraining(
         trainingClasses,
